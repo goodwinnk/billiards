@@ -1,0 +1,8 @@
+language: python
+python:
+  - "3.7"
+install:
+  - sudo apt-get install ffmpeg
+  - pip install -r requirements.txt
+script:
+  - pytest

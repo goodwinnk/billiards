@@ -129,7 +129,7 @@ def table_coordinates(input_image_path, output_image_path=None):
                abs(float(x.angle_between(y))) < 0.2
 
     # fix this
-	lines = unique(lines, lines_equal, 6)
+    lines = unique(lines, lines_equal, 6)
     lines = unique(lines, lines_equal, 4)
     
     if len(lines) != 4:

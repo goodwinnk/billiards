@@ -11,14 +11,14 @@ def download_youtube_video(url):
 # Check video frame by frame
 # 'f' for enabling frame-by-frame mode and for the next frame
 # 'c' for exit from frame-by-frame mode
-def frame_by_frame_play(video_path, skip_seconds=0, stop_on_start=False):
+# 's' for saving current frame
+def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
     if not os.path.exists(video_path):
         raise FileNotFoundError(video_path)
 
     video = cv2.VideoCapture(video_path)
     fps = int(video.get(cv2.CAP_PROP_FPS))
-    frame_index = int(skip_seconds * fps)
-    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+    video.set(cv2.CAP_PROP_POS_FRAMES, int(skip_seconds * fps))
 
     is_paused = stop_on_start
 
@@ -30,11 +30,18 @@ def frame_by_frame_play(video_path, skip_seconds=0, stop_on_start=False):
         cv2.imshow("video", frame)
 
         if is_paused:
-            key = cv2.waitKey(0)
-            while key not in [ord('f'), ord('c')]:
+            while True:
                 key = cv2.waitKey(0)
-            if key == ord('c'):
-                is_paused = False
+                if key == ord('c'):
+                    is_paused = False
+                    break
+                elif key == ord('f'):
+                    break
+                elif key == ord('s'):
+                    base_path = os.path.splitext(video_path)[0]
+                    cur_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+                    frame_path = base_path + "_" + str(cur_index) + ".jpg"
+                    cv2.imwrite(frame_path, frame)
         else:
             key = cv2.waitKey(1)
             if key == ord('f'):

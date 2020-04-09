@@ -13,7 +13,11 @@ def download_youtube_video(url):
 # 'd' enable frame-by-frame mode and go to the previous frame
 # 'c' exit from frame-by-frame mode
 # 's' save current frame
-def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
+def frame_by_frame_play(
+        video_path: str,
+        skip_seconds=0, stop_on_start=False,
+        frame_save_modifier="",
+        frame_modifier=lambda frame, index: frame):
     if not os.path.exists(video_path):
         raise FileNotFoundError(video_path)
 
@@ -28,7 +32,10 @@ def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
         if not ret:
             break
 
-        cv2.imshow("video", frame)
+        frame_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+        modified_frame = frame_modifier(frame, frame_index)
+
+        cv2.imshow("video", modified_frame)
 
         if is_paused:
             while True:
@@ -39,14 +46,13 @@ def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
                 elif key == ord('f'):
                     break
                 elif key == ord('d'):
-                    cur_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
-                    video.set(cv2.CAP_PROP_POS_FRAMES, cur_index - 2)
+                    frame_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+                    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index - 2)
                     break
                 elif key == ord('s'):
                     base_path = os.path.splitext(video_path)[0]
-                    cur_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
-                    frame_path = base_path + "_" + str(cur_index) + ".jpg"
-                    cv2.imwrite(frame_path, frame)
+                    frame_path = base_path + "_" + frame_save_modifier + str(frame_index) + ".jpg"
+                    cv2.imwrite(frame_path, modified_frame)
         else:
             key = cv2.waitKey(1)
             if key == ord('f') or key == ord('d'):

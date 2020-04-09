@@ -9,9 +9,10 @@ def download_youtube_video(url):
 
 
 # Check video frame by frame
-# 'f' for enabling frame-by-frame mode and for the next frame
-# 'c' for exit from frame-by-frame mode
-# 's' for saving current frame
+# 'f' enable frame-by-frame mode and go to the next frame
+# 'd' enable frame-by-frame mode and go to the previous frame
+# 'c' exit from frame-by-frame mode
+# 's' save current frame
 def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
     if not os.path.exists(video_path):
         raise FileNotFoundError(video_path)
@@ -37,6 +38,10 @@ def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
                     break
                 elif key == ord('f'):
                     break
+                elif key == ord('d'):
+                    cur_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+                    video.set(cv2.CAP_PROP_POS_FRAMES, cur_index - 2)
+                    break
                 elif key == ord('s'):
                     base_path = os.path.splitext(video_path)[0]
                     cur_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
@@ -44,7 +49,7 @@ def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
                     cv2.imwrite(frame_path, frame)
         else:
             key = cv2.waitKey(1)
-            if key == ord('f'):
+            if key == ord('f') or key == ord('d'):
                 is_paused = True
 
     video.release()
@@ -87,11 +92,8 @@ def extract_images_from_video(video_path, out_path="frames", delay_seconds=0.5, 
     video.release()
 
 
-# extract_images_from_video("The Train exercise by Fedor Gorst.mp4", skip_seconds=6, max_count=50)
-# frame_by_frame_play("Billiards Tutorial How to Break 8 Ball in Pool.mp4", skip_seconds=118, stop_on_start=True)
-
 if __name__ == '__main__':
     frame_by_frame_play(
         download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
-        skip_seconds=118,
+        skip_seconds=119,
         stop_on_start=True)

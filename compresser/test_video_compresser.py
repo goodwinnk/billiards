@@ -1,12 +1,11 @@
-import pytest, os
-from video_compresser import compress
-
+import os
+from compresser.video_compresser import compress
 
 def test_compress():
     tests = [
         (
-            'video/compress_test.mp4',
-            'video/compress_test_output.mp4',
+            '../video/compress_test.mp4',
+            '../video/compress_test_output.mp4',
             50,
             2000,
         ),

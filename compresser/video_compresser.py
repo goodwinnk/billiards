@@ -13,7 +13,7 @@ def compress(input_filename, output_filename, bitrate, delete_audio=True):
         flags += ' -an'
     inp = {input_filename: None}
     outp = {output_filename: flags}
-    ff = ffmpy.FFmpeg(inputs=inp, outputs=outp)
+    ff = ffmpy.FFmpeg(executable='C:/Users/NK/Downloads/ffmpeg-20200328-3362330-win64-static/ffmpeg-20200328-3362330-win64-static/bin/ffmpeg.exe', inputs=inp, outputs=outp)
     ff.run()
     out_sz = os.path.getsize(output_filename)
     print('Total {0:.3f}% lost'.format(100 * (inp_sz - out_sz) / inp_sz))

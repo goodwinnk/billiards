@@ -27,7 +27,13 @@ def frame_by_frame_play(
 
     is_paused = stop_on_start
 
-    while video.isOpened():
+    video_window = "video"
+    cv2.namedWindow(video_window, cv2.WINDOW_AUTOSIZE)
+
+    def is_video_closed():
+        return cv2.getWindowProperty(video_window, cv2.WINDOW_AUTOSIZE) == -1
+
+    while not is_video_closed():
         ret, frame = video.read()
         if not ret:
             break
@@ -35,18 +41,20 @@ def frame_by_frame_play(
         frame_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
         modified_frame = frame_modifier(frame, frame_index)
 
-        cv2.imshow("video", modified_frame)
+        cv2.imshow(video_window, modified_frame)
 
         if is_paused:
             while True:
-                key = cv2.waitKey(0)
+                if is_video_closed():
+                    break
+
+                key = cv2.waitKey(10)
                 if key == ord('c'):
                     is_paused = False
                     break
                 elif key == ord('f'):
                     break
                 elif key == ord('d'):
-                    frame_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
                     video.set(cv2.CAP_PROP_POS_FRAMES, frame_index - 2)
                     break
                 elif key == ord('s'):

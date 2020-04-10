@@ -34,11 +34,12 @@ def frame_by_frame_play(
         return cv2.getWindowProperty(video_window, cv2.WINDOW_AUTOSIZE) == -1
 
     while not is_video_closed():
+        frame_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+
         ret, frame = video.read()
         if not ret:
             break
 
-        frame_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
         modified_frame = frame_modifier(frame, frame_index)
 
         cv2.imshow(video_window, modified_frame)
@@ -55,7 +56,7 @@ def frame_by_frame_play(
                 elif key == ord('f'):
                     break
                 elif key == ord('d'):
-                    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index - 2)
+                    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index - 1)
                     break
                 elif key == ord('s'):
                     base_path = os.path.splitext(video_path)[0]

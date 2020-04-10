@@ -62,10 +62,15 @@ def frame_by_frame_play(
                     base_path = os.path.splitext(video_path)[0]
                     frame_path = base_path + "_" + frame_save_modifier + str(frame_index) + ".jpg"
                     cv2.imwrite(frame_path, modified_frame)
+                elif key == 27:
+                    cv2.destroyWindow(video_window)
+                    break
         else:
             key = cv2.waitKey(1)
             if key == ord('f') or key == ord('d'):
                 is_paused = True
+            elif key == 27:
+                cv2.destroyWindow(video_window)
 
     video.release()
 

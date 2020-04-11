@@ -112,8 +112,8 @@ def table_coordinates(input_image_path, output_image_path=None):
         a = np.cos(theta)
         b = np.sin(theta)
         x0, y0 = a * r, b * r
-        return sp.Line(sp.Point(x0 + 1000. * b, y0 - 1000. * a),
-                       sp.Point(x0 - 1000. * b, y0 + 1000. * a))
+        return sp.Line(sp.Point(x0 + 2000. * b, y0 - 2000. * a),
+                       sp.Point(x0 - 2000. * b, y0 + 2000. * a))
     
     def lines_equal(x, y):
         x = hough_to_sympy(x)
@@ -140,31 +140,16 @@ def table_coordinates(input_image_path, output_image_path=None):
     for line in lines:
         sp_lines.append(hough_to_sympy(line))
 
-    # find lines intersection points
-    points = []
-    for i in range(len(sp_lines)):
-        for j in range(i + 1, len(sp_lines)):
-            ints = sp_lines[i].intersection(sp_lines[j])
-            if len(ints) == 0:
-                continue
-            point = (float(ints[0][0]), float(ints[0][1]))
-            if -0.2 * m <= point[0] < 1.2 * m and -0.2 * n <= point[1] < 1.2 * n:
-                points.append(point)
-    if len(points) != 4:
-        raise ValueError('Can\'t recognize the table.')
-
     if output_image_path is not None:
-        # draw found lines on the new image and save it
-        # sort points in the correct order (counterclockwise)
         table_img = Image.fromarray(img_matrix)
         draw = ImageDraw.Draw(table_img)
-        for simplex in ConvexHull(points).simplices:
-            draw.line(
-                tuple(points[simplex[0]]) + tuple(points[simplex[1]]),
-                fill=255, width=4)
+        for line in sp_lines:
+            draw.line(tuple(line.p1) + tuple(line.p2), fill=255, width=4)
+        print('kek')
         table_img.save(output_image_path)
 
-    return points
+	# TODO: return points!
+    return lines
 
 
 if __name__ == '__main__':

@@ -115,8 +115,25 @@ def extract_images_from_video(video_path, out_path="frames", delay_seconds=0.5, 
     video.release()
 
 
+def play_with_move_detect(video_path: str, skip_seconds=0, stop_on_start=False):
+    sub = cv2.createBackgroundSubtractorKNN()
+
+    def to_gray_gaussian(frame, index):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gaussian_gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+        return sub.apply(gaussian_gray)
+
+    frame_by_frame_play(video_path,
+                        frame_modifier=to_gray_gaussian,
+                        stop_on_start=stop_on_start,
+                        skip_seconds=skip_seconds)
+
+
 if __name__ == '__main__':
-    frame_by_frame_play(
-        download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
-        skip_seconds=119,
-        stop_on_start=True)
+    play_with_move_detect(download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
+                          skip_seconds=119, stop_on_start=True)
+    # frame_by_frame_play(
+    #     download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
+    #     skip_seconds=119,
+    #     stop_on_start=True)

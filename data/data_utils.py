@@ -42,6 +42,9 @@ def frame_by_frame_play(
 
         modified_frame = frame_modifier(frame, frame_index)
 
+        cv2.rectangle(modified_frame, (10, 2), (100, 20), (255, 255, 255), -1)
+        cv2.putText(modified_frame, str(frame_index), (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+
         cv2.imshow(video_window, modified_frame)
 
         if is_paused:

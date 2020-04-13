@@ -6,7 +6,7 @@ def get_hough_circles(image, table_mask):
     hough_img = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     hough_img = hough_img * table_mask
     circles = cv2.HoughCircles(hough_img, cv2.HOUGH_GRADIENT, minDist=15, dp=1.6, param1=100, param2=27,
-                               minRadius=8, maxRadius=30)
+                               minRadius=8, maxRadius=25)
     return circles[0] if circles is not None else np.array([], dtype=np.float32).reshape((0, 3))
 
 

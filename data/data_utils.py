@@ -13,7 +13,11 @@ def download_youtube_video(url):
 # 'd' enable frame-by-frame mode and go to the previous frame
 # 'c' exit from frame-by-frame mode
 # 's' save current frame
-def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
+def frame_by_frame_play(
+        video_path: str,
+        skip_seconds=0, stop_on_start=False,
+        frame_save_modifier="",
+        frame_modifier=lambda frame, index: frame):
     if not os.path.exists(video_path):
         raise FileNotFoundError(video_path)
 
@@ -23,34 +27,53 @@ def frame_by_frame_play(video_path: str, skip_seconds=0, stop_on_start=False):
 
     is_paused = stop_on_start
 
-    while video.isOpened():
+    video_window = "video"
+    cv2.namedWindow(video_window, cv2.WINDOW_AUTOSIZE)
+
+    def is_video_closed():
+        return cv2.getWindowProperty(video_window, cv2.WINDOW_AUTOSIZE) == -1
+
+    while not is_video_closed():
+        frame_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
+
         ret, frame = video.read()
         if not ret:
             break
 
-        cv2.imshow("video", frame)
+        modified_frame = frame_modifier(frame, frame_index)
+
+        cv2.rectangle(modified_frame, (10, 2), (100, 20), (255, 255, 255), -1)
+        cv2.putText(modified_frame, str(frame_index), (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+
+        cv2.imshow(video_window, modified_frame)
 
         if is_paused:
             while True:
-                key = cv2.waitKey(0)
+                if is_video_closed():
+                    break
+
+                key = cv2.waitKey(10)
                 if key == ord('c'):
                     is_paused = False
                     break
                 elif key == ord('f'):
                     break
                 elif key == ord('d'):
-                    cur_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
-                    video.set(cv2.CAP_PROP_POS_FRAMES, cur_index - 2)
+                    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index - 1)
                     break
                 elif key == ord('s'):
                     base_path = os.path.splitext(video_path)[0]
-                    cur_index = int(video.get(cv2.CAP_PROP_POS_FRAMES))
-                    frame_path = base_path + "_" + str(cur_index) + ".jpg"
-                    cv2.imwrite(frame_path, frame)
+                    frame_path = base_path + "_" + frame_save_modifier + str(frame_index) + ".jpg"
+                    cv2.imwrite(frame_path, modified_frame)
+                elif key == 27:
+                    cv2.destroyWindow(video_window)
+                    break
         else:
             key = cv2.waitKey(1)
             if key == ord('f') or key == ord('d'):
                 is_paused = True
+            elif key == 27:
+                cv2.destroyWindow(video_window)
 
     video.release()
 
@@ -92,8 +115,25 @@ def extract_images_from_video(video_path, out_path="frames", delay_seconds=0.5, 
     video.release()
 
 
+def play_with_move_detect(video_path: str, skip_seconds=0, stop_on_start=False):
+    sub = cv2.createBackgroundSubtractorKNN()
+
+    def to_gray_gaussian(frame, index):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gaussian_gray = cv2.GaussianBlur(gray, (21, 21), 0)
+
+        return sub.apply(gaussian_gray)
+
+    frame_by_frame_play(video_path,
+                        frame_modifier=to_gray_gaussian,
+                        stop_on_start=stop_on_start,
+                        skip_seconds=skip_seconds)
+
+
 if __name__ == '__main__':
-    frame_by_frame_play(
-        download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
-        skip_seconds=119,
-        stop_on_start=True)
+    play_with_move_detect(download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
+                          skip_seconds=119, stop_on_start=True)
+    # frame_by_frame_play(
+    #     download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
+    #     skip_seconds=119,
+    #     stop_on_start=True)

@@ -1,0 +1,2 @@
+Should be in sync:
+[sync folder in repository](https://github.com/goodwinnk/billiards/tree/master/data/sync)  <-> [sync folder in Google Drive](https://drive.google.com/drive/u/0/folders/113-F2kbpGSFJ3JyDqKTLNT_ablVrjs7b)

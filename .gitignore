@@ -130,3 +130,6 @@ dmypy.json
 
 *.mp4
 *.jpg
+
+data/local
+data/sync

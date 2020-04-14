@@ -4,7 +4,7 @@ import json
 
 import cv2
 
-from ball_detection.detection import get_hough_circles, get_circle_region_borders
+from ball_detection.candidate_generation import get_hough_circles, get_circle_region_borders
 
 
 def extract_candidates(arguments):

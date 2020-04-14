@@ -3,6 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+CLASSIFICATION_SCORE_THRESHOLD = .5
+NET_INPUT_SIZE = 32, 32
+
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()

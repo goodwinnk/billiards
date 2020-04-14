@@ -1,8 +1,9 @@
 import torch
+from ball_detection.candidate_classifier.model import CLASSIFICATION_SCORE_THRESHOLD
 
 
 def pr(prediction, y):
-    prediction = prediction > .5
+    prediction = prediction > CLASSIFICATION_SCORE_THRESHOLD
     prediction = prediction.float()
     tp = torch.sum(prediction * y)
     return tp / prediction.sum(), tp / y.sum()

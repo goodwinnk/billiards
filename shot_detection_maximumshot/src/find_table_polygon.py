@@ -139,6 +139,24 @@ def remove_big_angles_from_hull(hull, angle_threshold=np.pi * 160 / 180):
     return hull
 
 
+def intersect_lines(line1, line2):
+    p1, p2 = line1
+    q1, q2 = line2
+
+    pv = p2 - p1
+    qv = q2 - q1
+
+    denum = pv[1] * qv[0] - pv[0] * qv[1]
+    assert math.fabs(denum) > np.float64(1e-9)
+
+    r = q1 - p1
+    num = r[1] * pv[0] - r[0] * pv[1]
+
+    t = num / denum
+
+    return q1 + t * qv
+
+
 def take_longest_sides_from_hull(hull, k):
     n = len(hull)
     assert n >= k
@@ -153,18 +171,7 @@ def take_longest_sides_from_hull(hull, k):
         j1 = ids[(it + 1) % k]
         j2 = (j1 + 1) % n
 
-        v1 = hull[i1] - hull[i2]
-        v2 = hull[j1] - hull[j2]
-
-        assert np.linalg.norm(v1) > 0
-        assert np.linalg.norm(v2) > 0
-
-        t = (
-            (hull[i1][1] - hull[j1][1]) * v2[0] -
-            (hull[i1][0] - hull[j1][0]) * v2[1]
-        ) / (v1[0] * v2[1] - v1[1] * v2[0])
-
-        khull.append(hull[i1] + v1 * t)
+        khull.append(intersect_lines((hull[i1], hull[i2]), (hull[j1], hull[j2])))
 
     return np.array(khull, dtype=int)
 

@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from data.data_utils import download_youtube_video, extract_images_from_video, frame_by_frame_play
+from data_utils.data_utils import download_youtube_video, extract_images_from_video, frame_by_frame_play
 
 
 # def run_downloading(args):

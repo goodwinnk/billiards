@@ -129,9 +129,7 @@ dmypy.json
 .pyre/
 
 *.mp4
-!data/sync/**/*.mp4
-
 *.jpg
-!data/sync/**/*.jpg
 
 data/local
+data/sync

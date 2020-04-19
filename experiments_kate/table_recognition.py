@@ -1,8 +1,6 @@
 import numpy as np
 import sympy as sp
-import copy
 import cv2
-import argparse
 from queue import Queue
 from scipy.spatial import ConvexHull
 from PIL import Image, ImageDraw
@@ -81,7 +79,7 @@ def unique(array, is_similar, max_res_size):
 
 # table_coordinates tries to find a billiard table in input_image_path,
 # saves the image with found lines in output_image_path (if it is not None)
-# and returns 4 pairs - coordinates of billiard table corners.
+# and returns 4 lines - borders of the billiard table.
 # May throw an exception if it can't recognize the table.
 def table_coordinates(input_image_path, output_image_path=None):
     with Image.open(input_image_path) as img:
@@ -102,7 +100,7 @@ def table_coordinates(input_image_path, output_image_path=None):
     gray = cv2.cvtColor(np.array(hull_img), cv2.COLOR_RGB2GRAY)
     edges = cv2.Canny(gray, 100, 200, apertureSize=3)
     lines = cv2.HoughLines(edges, 1, np.pi / 180, 100)
-    
+
     if lines is None:
         raise ValueError('Can\'t recognize the table.')
 
@@ -114,7 +112,7 @@ def table_coordinates(input_image_path, output_image_path=None):
         x0, y0 = a * r, b * r
         return sp.Line(sp.Point(x0 + 2000. * b, y0 - 2000. * a),
                        sp.Point(x0 - 2000. * b, y0 + 2000. * a))
-    
+
     def lines_equal(x, y):
         x = hough_to_sympy(x)
         y = hough_to_sympy(y)
@@ -124,17 +122,17 @@ def table_coordinates(input_image_path, output_image_path=None):
         if not isinstance(ints[0], sp.Point2D):
             return True
         p = (float(ints[0][0]), float(ints[0][1]))
-        return max(abs(2*p[0]/m - 1), 1) * \
-               max(abs(2*p[1]/n - 1), 1) * \
+        return max(abs(2 * p[0] / m - 1), 1) * \
+               max(abs(2 * p[1] / n - 1), 1) * \
                abs(float(x.angle_between(y))) < 0.2
 
     # fix this
     lines = unique(lines, lines_equal, 6)
     lines = unique(lines, lines_equal, 4)
-    
+
     if len(lines) != 4:
         raise ValueError('Can\'t recognize the table.')
-    
+
     # convert Hough lines to sympy.Line
     sp_lines = []
     for line in lines:
@@ -145,24 +143,16 @@ def table_coordinates(input_image_path, output_image_path=None):
         draw = ImageDraw.Draw(table_img)
         for line in sp_lines:
             draw.line(tuple(line.p1) + tuple(line.p2), fill=255, width=4)
-        print('kek')
         table_img.save(output_image_path)
 
-	# TODO: return points!
     return lines
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='''
-		The program tries to find billiard table in the input file image.
-		Saves the image with found table border lines in the output file.
-		Prints the coordinates of the found table.
-		
-		May fail if the table cannot be recognized.
-	''')
-    parser.add_argument('-i', metavar='input', required=True,
-                        help='input file name')
-    parser.add_argument('-o', metavar='output',
-                        help='output file name')
-    args = parser.parse_args()
-    print(table_coordinates(args.i, args.o))
+    for i in range(1, 14):
+        inp = '../data/sync/experiments_kate/table_recognition/billiard_sample{}.jpg'.format(i)
+        outp = '../data/sync/experiments_kate/table_recognition/billiard_sample{}_result.jpg'.format(i)
+        try:
+            table_coordinates('../data/sync/experiments_kate/table_recognition/billiard_sample{}.jpg'.format(i))
+        except:
+            pass

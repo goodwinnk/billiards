@@ -1,11 +1,13 @@
-from pytube import YouTube
 import os
+from typing import Optional
+
 import cv2
+from pytube import YouTube
 
 
 # Download youtube video
-def download_youtube_video(url):
-    return YouTube(url).streams.get_highest_resolution().download()
+def download_youtube_video(url, output_path: Optional[str] = None):
+    return YouTube(url).streams.get_highest_resolution().download(output_path)
 
 
 # Check video frame by frame
@@ -17,9 +19,13 @@ def frame_by_frame_play(
         video_path: str,
         skip_seconds=0, stop_on_start=False,
         frame_save_modifier="",
+        frame_output_path: Optional[str] = None,
         frame_modifier=lambda frame, index: frame):
     if not os.path.exists(video_path):
         raise FileNotFoundError(video_path)
+
+    base_frame_path = os.path.splitext(video_path)[0] if frame_output_path is None \
+        else os.path.join(frame_output_path, "frame")
 
     video = cv2.VideoCapture(video_path)
     fps = int(video.get(cv2.CAP_PROP_FPS))
@@ -62,8 +68,7 @@ def frame_by_frame_play(
                     video.set(cv2.CAP_PROP_POS_FRAMES, frame_index - 1)
                     break
                 elif key == ord('s'):
-                    base_path = os.path.splitext(video_path)[0]
-                    frame_path = base_path + "_" + frame_save_modifier + str(frame_index) + ".jpg"
+                    frame_path = base_frame_path + "_" + frame_save_modifier + str(frame_index) + ".jpg"
                     cv2.imwrite(frame_path, modified_frame)
                 elif key == 27:
                     cv2.destroyWindow(video_window)
@@ -131,8 +136,10 @@ def play_with_move_detect(video_path: str, skip_seconds=0, stop_on_start=False):
 
 
 if __name__ == '__main__':
-    play_with_move_detect(download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
-                          skip_seconds=119, stop_on_start=True)
+    play_with_move_detect(
+        download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M", "../data/local/data_utils_demo"),
+        skip_seconds=119, stop_on_start=True
+    )
     # frame_by_frame_play(
     #     download_youtube_video("https://www.youtube.com/watch?v=_xig92Lo72M"),
     #     skip_seconds=119,

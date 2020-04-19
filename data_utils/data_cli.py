@@ -16,7 +16,8 @@ def run_manual_extraction(args):
 
 if __name__ == '__main__':
     argument_parser = ArgumentParser()
-    subparsers = argument_parser.add_subparsers()
+    subparsers = argument_parser.add_subparsers(dest='command')
+    subparsers.required = True
 
     # downloading_parser = subparsers.add_parser('download', help='Download video from YouTube')
     # downloading_parser.add_argument('url')

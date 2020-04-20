@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from data_utils.data_utils import download_youtube_video, extract_images_from_video, frame_by_frame_play
+from data_utils.utils import download_youtube_video, extract_images_from_video, frame_by_frame_play
 
 
 # def run_downloading(args):
@@ -11,12 +11,14 @@ def run_extraction(args):
 
 
 def run_manual_extraction(args):
-    frame_by_frame_play(args.video_path, skip_seconds=args.skip, frame_save_modifier=args.name_mixture)
+    frame_by_frame_play(args.video_path, skip_seconds=args.skip, frame_output_path=args.output,
+                        frame_save_modifier=args.name_mixture)
 
 
 if __name__ == '__main__':
     argument_parser = ArgumentParser()
-    subparsers = argument_parser.add_subparsers()
+    subparsers = argument_parser.add_subparsers(dest='command')
+    subparsers.required = True
 
     # downloading_parser = subparsers.add_parser('download', help='Download video from YouTube')
     # downloading_parser.add_argument('url')
@@ -40,6 +42,8 @@ if __name__ == '__main__':
                                        help='Time to skip in the beginning of the video in seconds')
     extract_manual_parser.add_argument('--name_mixture', default='',
                                        help='Text to add to file names')
+    extract_manual_parser.add_argument('--output', default=None,
+                                       help='Output directory. Directory of video is used by default.')
     extract_manual_parser.set_defaults(func=run_manual_extraction)
 
     arguments = argument_parser.parse_args()

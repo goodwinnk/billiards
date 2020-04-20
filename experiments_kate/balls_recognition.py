@@ -107,9 +107,9 @@ def mark_balls(frame, index):
 
 
 if __name__ == '__main__':
-    for i in range(1, 6):
+    for i in range(1, 5):
         print(i)
-        img = cv2.imread(f'../../example{i}.jpg')
+        img = cv2.imread(f'../data/sync/experiments_kate/balls_recognition/example{i}.jpg')
         out_img = mark_balls(img, None)
-        cv2.imwrite(f'../../example{i}_res.jpg', out_img)
+        cv2.imwrite(f'../data/sync/experiments_kate/balls_recognition/example{i}_res.jpg', out_img)
 

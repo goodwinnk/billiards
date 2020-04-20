@@ -18,7 +18,7 @@ def download_youtube_video(url, output_path: Optional[str] = None):
 def frame_by_frame_play(
         video_path: str,
         skip_seconds=0, stop_on_start=False,
-        frame_save_modifier="",
+        frame_save_modifier="mod",
         frame_output_path: Optional[str] = None,
         frame_modifier=lambda frame, index: frame):
     if not os.path.exists(video_path):
@@ -32,6 +32,7 @@ def frame_by_frame_play(
     video.set(cv2.CAP_PROP_POS_FRAMES, int(skip_seconds * fps))
 
     is_paused = stop_on_start
+    is_origin_frame = False
 
     video_window = "video"
     cv2.namedWindow(video_window, cv2.WINDOW_AUTOSIZE)
@@ -46,7 +47,9 @@ def frame_by_frame_play(
         if not ret:
             break
 
-        modified_frame = frame_modifier(frame, frame_index)
+        modified_frame = frame
+        if not is_origin_frame:
+            modified_frame = frame_modifier(frame, frame_index)
 
         cv2.rectangle(modified_frame, (10, 2), (100, 20), (255, 255, 255), -1)
         cv2.putText(modified_frame, str(frame_index), (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
@@ -67,8 +70,13 @@ def frame_by_frame_play(
                 elif key == ord('d'):
                     video.set(cv2.CAP_PROP_POS_FRAMES, frame_index - 1)
                     break
+                elif key == ord('o'):
+                    video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+                    is_origin_frame = not is_origin_frame
+                    break
                 elif key == ord('s'):
-                    frame_path = base_frame_path + "_" + frame_save_modifier + str(frame_index) + ".jpg"
+                    frame_suffix = frame_save_modifier if not is_origin_frame else ""
+                    frame_path = base_frame_path + "_" + frame_suffix + str(frame_index) + ".jpg"
                     cv2.imwrite(frame_path, modified_frame)
                 elif key == 27:
                     cv2.destroyWindow(video_window)
@@ -77,6 +85,9 @@ def frame_by_frame_play(
             key = cv2.waitKey(1)
             if key == ord('f') or key == ord('d'):
                 is_paused = True
+            if key == ord('o'):
+                is_paused = True
+                is_origin_frame = not is_origin_frame
             elif key == 27:
                 cv2.destroyWindow(video_window)
 

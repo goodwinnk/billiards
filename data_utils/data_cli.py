@@ -11,7 +11,7 @@ def run_extraction(args):
 
 
 def run_manual_extraction(args):
-    frame_by_frame_play(args.video_path, skip_seconds=args.skip)
+    frame_by_frame_play(args.video_path, skip_seconds=args.skip, frame_save_modifier=args.name_mixture)
 
 
 if __name__ == '__main__':
@@ -34,11 +34,13 @@ if __name__ == '__main__':
                                 help='Maximum number of images to extract')
     extract_parser.set_defaults(func=run_extraction)
 
-    frame_parser = subparsers.add_parser('extract_manual', help='Extract images from video manually')
-    frame_parser.add_argument('video_path', help='Path to the video')
-    frame_parser.add_argument('--skip', type=float, default=0,
-                              help='Time to skip in the beginning of the video in seconds')
-    frame_parser.set_defaults(func=run_manual_extraction)
+    extract_manual_parser = subparsers.add_parser('extract_manual', help='Extract images from video manually')
+    extract_manual_parser.add_argument('video_path', help='Path to the video')
+    extract_manual_parser.add_argument('--skip', type=float, default=0,
+                                       help='Time to skip in the beginning of the video in seconds')
+    extract_manual_parser.add_argument('--name_mixture', default='',
+                                       help='Text to add to file names')
+    extract_manual_parser.set_defaults(func=run_manual_extraction)
 
     arguments = argument_parser.parse_args()
     arguments.func(arguments)

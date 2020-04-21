@@ -78,6 +78,28 @@ def extract_background(arguments):
     cv2.imwrite(str(data_dir / arguments.output_name), background)
 
 
+def show_candidates(arguments):
+    data_dir = arguments.data_dir
+    with (data_dir / arguments.candidates_filename).open() as candidates_file:
+        images_ball_candidates = json.load(candidates_file)
+
+    for image_filename, candidates in images_ball_candidates.items():
+        print(image_filename)
+        image = cv2.imread(str(data_dir / image_filename))
+        for candidate in candidates:
+            y0, y1, x0, x1 = candidate['box']
+            cv2.rectangle(image, (y0, x0), (y1, x1), (0, 255, 0), 2)
+
+        cv2.imshow('Candidates', image)
+
+        while True:
+            key = cv2.waitKey(10000)
+            if key == ord('n'):
+                break
+            elif key == ord('q'):
+                return
+
+
 if __name__ == '__main__':
     arg_parser = ArgumentParser()
     subparsers = arg_parser.add_subparsers()
@@ -106,6 +128,11 @@ if __name__ == '__main__':
     background_parser.add_argument('-o', '--output_name', default='background.png')
     background_parser.add_argument('-m', '--table_mask_path', default='table_mask.png')
     background_parser.set_defaults(func=extract_background)
+
+    show_parser = subparsers.add_parser('show')
+    show_parser.add_argument('data_dir', type=Path)
+    show_parser.add_argument('-c', '--candidates_filename', default='candidates.json')
+    show_parser.set_defaults(func=show_candidates)
 
     args = arg_parser.parse_args()
     args.func(args)

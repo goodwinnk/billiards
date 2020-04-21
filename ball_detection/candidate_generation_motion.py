@@ -3,6 +3,7 @@ import cv2
 
 
 MAX_BALL_CONTOUR_LEN = 200
+BLUR_PARAMETERS = [(15, 15), 0]
 
 
 def get_background(table_mask, frames):
@@ -10,7 +11,7 @@ def get_background(table_mask, frames):
     seq_frames = []
 
     for frame in frames:
-        frame = cv2.GaussianBlur(frame, (15, 15), 0)
+        frame = cv2.GaussianBlur(frame, *BLUR_PARAMETERS)
         frame_table = frame[index_table_mask]
         seq_frames.append(frame_table)
 
@@ -25,6 +26,7 @@ class MotionDetector:
         self.background = background
 
     def get_color_deviation(self, image):
+        image = cv2.GaussianBlur(image, *BLUR_PARAMETERS)
         diff = cv2.absdiff(image, self.background)
         deviation = np.zeros(image.shape[:2], dtype=np.int16)
         deviation[self.table_mask] = diff[self.table_mask].sum(axis=1)
@@ -44,7 +46,7 @@ class MotionDetector:
         boxes = []
         for contour in contours:
             if len(contour) <= MAX_BALL_CONTOUR_LEN:
-                cx, cy = center = map(int, contour.mean(axis=0)[0])
+                cx, cy = center = tuple(map(int, contour.mean(axis=0)[0]))
                 xs, ys = contour.squeeze().T
                 max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
                 half_side = min(int(max_coord_delta * 1.5), n - cx, cx, m - cy, cy)

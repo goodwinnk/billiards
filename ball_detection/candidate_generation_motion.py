@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 
 
+MIN_BALL_CONTOUR_LEN = 40
 MAX_BALL_CONTOUR_LEN = 200
 BLUR_PARAMETERS = [(15, 15), 0]
 
@@ -41,11 +42,10 @@ class MotionDetector:
     def get_zones_by_mask(self, image):
         motion_mask = self.get_motion_mask(image)
         contours, _ = cv2.findContours(motion_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        contours = [c for c in contours if len(c) <= MAX_BALL_CONTOUR_LEN]
         m, n = image.shape[:2]
         boxes = []
         for contour in contours:
-            if len(contour) <= MAX_BALL_CONTOUR_LEN:
+            if MIN_BALL_CONTOUR_LEN <= len(contour) <= MAX_BALL_CONTOUR_LEN:
                 cx, cy = center = tuple(map(int, contour.mean(axis=0)[0]))
                 xs, ys = contour.squeeze().T
                 max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())

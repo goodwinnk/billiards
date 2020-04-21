@@ -1,6 +1,6 @@
 import torch
 
-from ball_detection.candidate_generation import get_hough_circles, get_circle_region_borders
+from ball_detection.candidate_generation_hough import get_hough_circles, get_circle_region_borders
 from ball_detection.candidate_classifier.model import Net, CLASSIFICATION_SCORE_THRESHOLD
 from ball_detection.candidate_classifier.data_preprocessing import cut_boxes
 

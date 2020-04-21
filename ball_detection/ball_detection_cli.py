@@ -5,7 +5,7 @@ import json
 import cv2
 import numpy as np
 
-from ball_detection.candidate_generation_hough import get_hough_circles, get_circle_region_borders
+from ball_detection.candidate_generation_hough import HoughCircleDetector
 from ball_detection.candidate_generation_motion import get_background, MotionDetector
 
 
@@ -23,17 +23,16 @@ def extract_candidates(data_dir, picture_name_template, output_filename, candida
 def extract_candidates_hough(arguments):
     data_dir = arguments.data_dir
     table_mask = cv2.imread(str(data_dir / arguments.table_mask_filename))[:, :, 0]
+    circle_detector = HoughCircleDetector(table_mask)
 
     def get_circle_regions(image):
-        circles = get_hough_circles(image, table_mask)
-        candidate_regions = get_circle_region_borders(image, circles)
         return [
             {
                 'center': [float(cx), float(cy)],
                 'radius': float(r),
                 'box': [x0, x1, y0, y1]
             }
-            for (cx, cy), r, (x0, x1, y0, y1) in candidate_regions
+            for (cx, cy), (x0, x1, y0, y1), r in circle_detector.get_regions(image, return_radius=True)
         ]
 
     extract_candidates(data_dir, arguments.picture_name_template, arguments.output_filename, get_circle_regions)
@@ -51,7 +50,7 @@ def extract_candidates_motion(arguments):
                 'center': list(center),
                 'box': list(box)
             }
-            for center, box in motion_detector.get_zones_by_mask(image)
+            for center, box in motion_detector.get_regions(image)
         ]
 
     extract_candidates(data_dir, arguments.picture_name_template, arguments.output_filename, get_motion_regions)

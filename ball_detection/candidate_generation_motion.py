@@ -39,11 +39,11 @@ class MotionDetector:
         return cv2.adaptiveThreshold(discrete_color_deviation, 1, cv2.ADAPTIVE_THRESH_MEAN_C,
                                      cv2.THRESH_BINARY, 81, -50)
 
-    def get_zones_by_mask(self, image):
+    def get_regions(self, image):
         motion_mask = self.get_motion_mask(image)
         contours, _ = cv2.findContours(motion_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         m, n = image.shape[:2]
-        boxes = []
+        regions = []
         for contour in contours:
             if MIN_BALL_CONTOUR_LEN <= len(contour) <= MAX_BALL_CONTOUR_LEN:
                 cx, cy = center = tuple(map(int, contour.mean(axis=0)[0]))
@@ -51,5 +51,5 @@ class MotionDetector:
                 max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
                 half_side = min(int(max_coord_delta * 1.5), n - cx, cx, m - cy, cy)
                 borders = cx - half_side, cx + half_side + 1, cy - half_side, cy + half_side + 1
-                boxes.append((center, borders))
-        return boxes
+                regions.append((center, borders))
+        return regions

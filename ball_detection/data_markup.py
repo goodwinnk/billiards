@@ -69,9 +69,9 @@ def mark_regions(args):
 if __name__ == '__main__':
     arg_parser = ArgumentParser()
     arg_parser.add_argument('data_dir', type=Path, help='Directory with images and candidate files')
-    arg_parser.add_argument('--candidates_file', default='candidates.json',
+    arg_parser.add_argument('-c', '--candidates_file', default='candidates.json',
                             help='Name of the file with candidate regions')
-    arg_parser.add_argument('--markup_file', default='markup.json',
+    arg_parser.add_argument('-m', '--markup_file', default='markup.json',
                             help='Name of the file with markup')
 
     mark_regions(arg_parser.parse_args())

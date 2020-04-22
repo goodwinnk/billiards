@@ -8,3 +8,5 @@ opencv-python
 sympy
 pytube3
 pytorch>=1.4
+matplotlib
+tensorflow>=2.1.0

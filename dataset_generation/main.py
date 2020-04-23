@@ -31,7 +31,7 @@ def process_image(img, solid_balls_dir, striped_balls_dir, not_balls_dir, img_pa
             pass
 
     def create_path(dir, i):
-        return dir + '/{}_{}.png'.format(i, img_path)
+        return dir + '/{}_{}.jpg'.format(i, img_path)
 
     for i in circles[0, :]:
         x, y, r = i[0], i[1], i[2]
@@ -43,19 +43,19 @@ def process_image(img, solid_balls_dir, striped_balls_dir, not_balls_dir, img_pa
         while True:
             key = cv2.waitKey(10)
             if key == ord('1'):  # solid ball
+                solid_balls_cnt += 1
                 path = create_path(solid_balls_dir, solid_balls_cnt)
                 save_image(img, x, y, r, path)
-                solid_balls_cnt += 1
                 break
             if key == ord('2'):  # striped ball
+                striped_balls_cnt += 1
                 path = create_path(striped_balls_dir, striped_balls_cnt)
                 save_image(img, x, y, r, path)
-                striped_balls_cnt += 1
                 break
             if key == ord('n'):  # not ball
+                not_balls_cnt += 1
                 path = create_path(not_balls_dir, not_balls_cnt)
                 save_image(img, x, y, r, path)
-                not_balls_cnt += 1
                 break
             if key == ord('s'):  # skip
                 break

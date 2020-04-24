@@ -8,6 +8,58 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 
+# finds mask for convex polygon on the image of given size
+def find_convex_hull_mask(size, hull):
+    n, m = size
+    mask = np.zeros((n, m))
+
+    i = 0
+    I = 0
+    # finds lefties and rightest points in the hull
+    for q, (y, x) in enumerate(hull):
+        if x < hull[i][1]:
+            i = q
+        if x > hull[I][1]:
+            I = q
+    j = i
+    lx = hull[i][1]
+    rx = hull[I][1]
+
+    def get_prev(_id):
+        return (_id - 1) if (_id > 0) else (len(hull) - 1)
+
+    def get_next(_id):
+        return (_id + 1) % len(hull)
+
+    def get_y_on_segment(p1, p2, x, vertical_segment_policy: str = 'up'):
+        y1, x1 = p1
+        y2, x2 = p2
+        if x1 > x2 or (x1 == x2 and y1 > y2):
+            x1, y1, x2, y2, p1, p2 = x2, y2, x1, y1, p2, p1  # swap
+        if x1 == x2:
+            return y1 if vertical_segment_policy == 'down' else y2
+        alpha = (x - x1) / (x2 - x1)
+        return int(np.round((1 - alpha) * y1 + alpha * y2))
+
+    lx = max(0, lx)
+    rx = min(n - 1, rx)
+
+    for x in range(lx, rx + 1):
+        while hull[i][1] < x:
+            i = get_prev(i)
+        while hull[j][1] < x:
+            j = get_next(j)
+        yi = get_y_on_segment(hull[i], hull[get_next(i)], x, 'up')
+        yj = get_y_on_segment(hull[j], hull[get_prev(j)], x, 'down')
+        yi = max(0, min(m - 1, yi))
+        yj = max(0, min(m - 1, yj))
+        if yi > yj:
+            yi, yj = yj, yi
+        mask[x, yi: yj + 1] = 1
+
+    return mask
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Finds table polygon for each frame'

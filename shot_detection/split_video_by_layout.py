@@ -3,7 +3,7 @@ import typing
 import cv2
 import numpy as np
 
-from video_operations import save_frames_as_video
+from data_utils.video_operations import save_frames_as_video
 
 
 def parse_args():

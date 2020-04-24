@@ -2,6 +2,7 @@ import os
 from typing import Optional
 
 import cv2
+import numpy as np
 from pytube import YouTube
 
 
@@ -144,6 +145,37 @@ def play_with_move_detect(video_path: str, skip_seconds=0, stop_on_start=False):
                         frame_modifier=to_gray_gaussian,
                         stop_on_start=stop_on_start,
                         skip_seconds=skip_seconds)
+
+
+# from_s: left bound in seconds
+# to_s: right bound in seconds
+def cut_video(video_path: str, out_path: str, from_s: float, to_s: float):
+    capture = cv2.VideoCapture(video_path)
+    fps = np.round(capture.get(cv2.CAP_PROP_FPS))
+    from_frame = int(from_s * fps)
+    to_frame = int(to_s * fps)
+    frame_id = 0
+
+    writer = None
+
+    print(from_frame, to_frame)
+
+    while capture.isOpened():
+        response, frame = capture.read()
+        if not response or frame_id > to_frame:
+            break
+        print(frame_id)
+        if from_frame <= frame_id:
+            if writer is None:
+                h, w = frame.shape[: 2]
+                fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+                writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
+                print(F'WRITE TO {os.path.abspath(out_path)}')
+            writer.write(frame)
+        frame_id += 1
+
+    if writer is not None:
+        writer.release()
 
 
 if __name__ == '__main__':

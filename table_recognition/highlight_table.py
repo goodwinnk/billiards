@@ -32,7 +32,9 @@ if __name__ == '__main__':
     capture = cv2.VideoCapture(args.video)
     fps = int(np.round(capture.get(cv2.CAP_PROP_FPS)))
 
-    frames = []
+    h = None
+    w = None
+    writer = None
 
     with open(args.layout) as layout_file:
         for line in layout_file:
@@ -42,6 +44,11 @@ if __name__ == '__main__':
             response, frame = capture.read()
             assert response
 
+            if h is None:
+                h, w = frame.shape[: 2]
+                fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+                writer = cv2.VideoWriter(args.output, fourcc, fps, (w, h))
+
             hull_size = len(hull)
 
             for i in range(hull_size):
@@ -50,6 +57,6 @@ if __name__ == '__main__':
                 cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 4)
                 cv2.circle(frame, (x1, y1), 10, (0, 0, 255), 4)
 
-            frames.append(frame)
+            writer.write(frame)
 
-    save_frames_as_video(args.output, frames, fps)
+    writer.release()

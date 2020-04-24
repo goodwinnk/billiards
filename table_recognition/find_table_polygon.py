@@ -164,7 +164,7 @@ def find_table_polygon(
 
 
 # removes vertex which produces the largest angle until it greater than threshold
-def remove_big_angles_from_hull(hull, angle_threshold=np.pi * 160 / 180):
+def remove_big_angles_from_hull(hull, angle_threshold=np.pi * 160 / 180, min_sides=4):
     n = len(hull)
 
     def get_angle(i):
@@ -176,7 +176,7 @@ def remove_big_angles_from_hull(hull, angle_threshold=np.pi * 160 / 180):
 
         return math.acos(np.sum(v1 * v2) / np.linalg.norm(v1) / np.linalg.norm(v2))
 
-    while True:
+    while len(hull) > min_sides:
         mx_angle_id = 0
         mx_angle = 0
         for i in range(n):

@@ -1,5 +1,8 @@
 from argparse import ArgumentParser
-from data_utils.utils import download_youtube_video, extract_images_from_video, frame_by_frame_play
+from data_utils.utils import download_youtube_video, extract_images_from_video, frame_by_frame_play, cut_video
+import dateparser
+from datetime import timedelta
+
 
 
 # def run_downloading(args):
@@ -13,6 +16,25 @@ def run_extraction(args):
 def run_manual_extraction(args):
     frame_by_frame_play(args.video_path, skip_seconds=args.skip, frame_output_path=args.output,
                         frame_save_modifier=args.name_mixture)
+
+
+def run_cut(args):
+    def get_seconds(t):
+        d = dateparser.parse(t)
+        return timedelta(hours=d.hour, minutes=d.minute, seconds=d.second).total_seconds()
+
+    from_s = get_seconds(args.left)
+    to_s = get_seconds(args.right)
+    cut_video(args.video_path, args.out_video_path, from_s, to_s)
+
+
+def add_cut_subparser(subparsers):
+    cut_parser = subparsers.add_parser('cut', help='Cut the video by time interval')
+    cut_parser.add_argument('video_path', help='Path to the video')
+    cut_parser.add_argument('out_video_path', help='Path to the output video')
+    cut_parser.add_argument('left', help='The left bound of the time interval in hh:mm:ss format')
+    cut_parser.add_argument('right', help='The right bound of the time interval in hh:mm:ss format')
+    cut_parser.set_defaults(func=run_cut)
 
 
 if __name__ == '__main__':
@@ -45,6 +67,8 @@ if __name__ == '__main__':
     extract_manual_parser.add_argument('--output', default=None,
                                        help='Output directory. Directory of video is used by default.')
     extract_manual_parser.set_defaults(func=run_manual_extraction)
+
+    add_cut_subparser(subparsers)
 
     arguments = argument_parser.parse_args()
     arguments.func(arguments)

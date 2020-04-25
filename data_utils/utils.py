@@ -154,20 +154,21 @@ def cut_video(video_path: str, out_path: str, from_s: float, to_s: float):
     fps = np.round(capture.get(cv2.CAP_PROP_FPS))
     from_frame = int(from_s * fps)
     to_frame = int(to_s * fps)
-    frame_id = 0
 
     writer = None
+
+    capture.set(cv2.CAP_PROP_POS_FRAMES, from_frame)
+    frame_id = from_frame
 
     while capture.isOpened():
         response, frame = capture.read()
         if not response or frame_id > to_frame:
             break
-        if from_frame <= frame_id:
-            if writer is None:
-                h, w = frame.shape[: 2]
-                fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-                writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
-            writer.write(frame)
+        if writer is None:
+            h, w = frame.shape[: 2]
+            fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+            writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
+        writer.write(frame)
         frame_id += 1
 
     if writer is not None:

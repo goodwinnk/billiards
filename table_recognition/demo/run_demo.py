@@ -7,7 +7,7 @@ if PYTHONPATH not in os.environ:
 if len(os.environ[PYTHONPATH]) > 0:
     os.environ[PYTHONPATH] += f':{os.path.abspath(os.path.join("..", ".."))}'
 else:
-    os.environ[PYTHONPATH] = os.path.abspath(os.path.join('..' '..'))
+    os.environ[PYTHONPATH] = os.path.abspath(os.path.join('..', '..'))
 sys.path.append(os.environ[PYTHONPATH])
 
 from data_utils.utils import download_youtube_video

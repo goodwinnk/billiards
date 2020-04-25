@@ -158,19 +158,15 @@ def cut_video(video_path: str, out_path: str, from_s: float, to_s: float):
 
     writer = None
 
-    print(from_frame, to_frame)
-
     while capture.isOpened():
         response, frame = capture.read()
         if not response or frame_id > to_frame:
             break
-        print(frame_id)
         if from_frame <= frame_id:
             if writer is None:
                 h, w = frame.shape[: 2]
                 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
                 writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
-                print(F'WRITE TO {os.path.abspath(out_path)}')
             writer.write(frame)
         frame_id += 1
 

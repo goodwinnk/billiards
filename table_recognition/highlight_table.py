@@ -26,15 +26,11 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
-    args = parse_args()
-
-    capture = cv2.VideoCapture(args.video)
+def highlight_table_video(video_path: str, layout_file_path: str, output_video_path: str):
+    capture = cv2.VideoCapture(video_path)
     fps = int(np.round(capture.get(cv2.CAP_PROP_FPS)))
-
     frames = []
-
-    with open(args.layout) as layout_file:
+    with open(layout_file_path) as layout_file:
         for line in layout_file:
             coordinates = list(map(int, line.strip().split(' ')))
             hull = [(coordinates[i + 1], coordinates[i]) for i in range(0, len(coordinates), 2)]
@@ -51,5 +47,9 @@ if __name__ == '__main__':
                 cv2.circle(frame, (x1, y1), 10, (0, 0, 255), 4)
 
             frames.append(frame)
+    save_frames_as_video(output_video_path, frames, fps)
 
-    save_frames_as_video(args.output, frames, fps)
+
+if __name__ == '__main__':
+    args = parse_args()
+    highlight_table_video(args.video, args.layout, args.output)

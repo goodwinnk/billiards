@@ -1,3 +1,5 @@
+from enum import Enum
+
 import torch
 import cv2
 
@@ -5,12 +7,23 @@ from ball_detection.candidate_classifier.model import Net, CLASSIFICATION_SCORE_
 from ball_detection.candidate_classifier.data_preprocessing import cut_boxes
 
 
+class BallType(Enum):
+    INTEGRAL = 1
+    STRIPED = 2
+
+
+VIS_COLORS = {
+    BallType.INTEGRAL: (0, 255, 0),
+    BallType.STRIPED: (255, 0, 0)
+}
+
+
 def visualize_balls(image, balls):
     visualization = image.copy()
     if not len(balls):
         return visualization
-    for _, (x0, x1, y0, y1) in balls:
-        cv2.rectangle(visualization, (x0, y0), (x1, y1), (0, 255, 0), 3)
+    for _, (x0, x1, y0, y1), ball_type in balls:
+        cv2.rectangle(visualization, (x0, y0), (x1, y1), VIS_COLORS[ball_type], 3)
     return visualization
 
 
@@ -24,8 +37,8 @@ class BallDetector:
         boxes = torch.Tensor(boxes)
         boxes = boxes.permute((0, 3, 1, 2))
         classification_scores = self.classifier(boxes)
-        classification_scores = classification_scores.detach().numpy().flatten()
-        prediction = classification_scores > CLASSIFICATION_SCORE_THRESHOLD
+        classification_scores = classification_scores.detach().numpy()
+        prediction = classification_scores.argmax(axis=1)
         return prediction
 
     def get_balls(self, image):
@@ -33,5 +46,9 @@ class BallDetector:
         box_cuts = cut_boxes(image, (box for _, box in candidate_regions))
         if not len(box_cuts):
             return []
-        classification_mask = self._classify(box_cuts)
-        return [region for region, prediction in zip(candidate_regions, classification_mask) if prediction]
+        region_classes = self._classify(box_cuts)
+        return [
+            region + (BallType(prediction),)
+            for region, prediction in zip(candidate_regions, region_classes)
+            if prediction
+        ]

@@ -26,6 +26,16 @@ def parse_args():
     return parser.parse_args()
 
 
+def draw_polygon_on_frame(frame, polygon):
+    hull_size = len(polygon)
+
+    for i in range(hull_size):
+        x1, y1 = polygon[i]
+        x2, y2 = polygon[(i + 1) % hull_size]
+        cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 4)
+        cv2.circle(frame, (x1, y1), 10, (0, 0, 255), 4)
+
+
 def highlight_table_video(video_path: str, layout_file_path: str, output_video_path: str):
     capture = cv2.VideoCapture(video_path)
     fps = int(np.round(capture.get(cv2.CAP_PROP_FPS)))
@@ -38,13 +48,7 @@ def highlight_table_video(video_path: str, layout_file_path: str, output_video_p
             response, frame = capture.read()
             assert response
 
-            hull_size = len(hull)
-
-            for i in range(hull_size):
-                x1, y1 = hull[i]
-                x2, y2 = hull[(i + 1) % hull_size]
-                cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 4)
-                cv2.circle(frame, (x1, y1), 10, (0, 0, 255), 4)
+            draw_polygon_on_frame(frame, hull)
 
             frames.append(frame)
     save_frames_as_video(output_video_path, frames, fps)

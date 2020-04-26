@@ -228,6 +228,14 @@ def take_longest_sides_from_hull(hull, k):
     return np.array(khull, dtype=int)
 
 
+def find_table_polygon_on_frame(frame):
+    hull = find_table_polygon(deepcopy(frame))
+    hull = remove_big_angles_from_hull(hull)
+    hull = take_longest_sides_from_hull(hull, 4)
+    assert len(hull) == 4
+    return hull[:, ::-1]
+
+
 def table_polygon_layout(video_path: str, layout_file_path: str):
     np.random.seed(42)
 
@@ -240,11 +248,7 @@ def table_polygon_layout(video_path: str, layout_file_path: str):
             if not response:
                 break
 
-            hull = find_table_polygon(deepcopy(frame))
-            hull = remove_big_angles_from_hull(hull)
-            hull = take_longest_sides_from_hull(hull, 4)
-            assert len(hull) == 4
-            hull = hull[:, ::-1]
+            hull = find_table_polygon_on_frame(frame)
 
             for x, y in hull:
                 layout_file.write(f'{x} {y} ')

@@ -10,9 +10,10 @@ else:
     os.environ[PYTHONPATH] = os.path.abspath(os.path.join('..', '..'))
 sys.path.append(os.environ[PYTHONPATH])
 
-from data_utils.utils import download_youtube_video
+from data_utils.utils import download_youtube_video, cut_video, parse_seconds_from_hh_mm_ss
+from table_recognition.highlight_table import highlight_table
+from table_recognition.find_table_polygon import find_table_layout
 from pathlib import Path
-import subprocess
 import shutil
 
 
@@ -34,22 +35,9 @@ YOTUBE_DATA_URL = 'https://www.youtube.com/watch?v=YzqJxDx2Crc'
 
 def draw_table(input_video_path, layout_path, video_with_table_path):
     print('Finding frame by frame table polygon...')
-
-    subprocess.run([
-        'python3', TABLE_RECOGNITION_ROOT / 'find_table_polygon.py',
-        '--video', input_video_path,
-        '--layout', layout_path
-    ])
-
+    find_table_layout(input_video_path, layout_path)
     print('Drawing table...')
-
-    subprocess.run([
-        'python3', TABLE_RECOGNITION_ROOT / 'highlight_table.py',
-        '--video', input_video_path,
-        '--layout', layout_path,
-        '--output', video_with_table_path
-    ])
-
+    highlight_table(input_video_path, layout_path, video_with_table_path)
     print(f'Video with highlighted table saved in: {os.path.abspath(video_with_table_path)}')
 
 
@@ -60,18 +48,18 @@ if __name__ == '__main__':
     os.makedirs(GENERATED_PATH, exist_ok=False)
 
     print('Executing local data demo...')
-    draw_table(LOCAL_INPUT_VIDEO_PATH, LOCAL_LAYOUT_PATH, LOCAL_VIDEO_WITH_TABLE_PATH)
+    draw_table(str(LOCAL_INPUT_VIDEO_PATH), str(LOCAL_LAYOUT_PATH), str(LOCAL_VIDEO_WITH_TABLE_PATH))
 
     print('Executing youtube data demo...')
     if os.path.exists(YOUTUBE_INPUT_VIDEO_PATH):
         os.remove(YOUTUBE_INPUT_VIDEO_PATH)
-    download_youtube_video(YOTUBE_DATA_URL, DEMO_ROOT / 'tmp')
+    download_youtube_video(str(YOTUBE_DATA_URL), str(DEMO_ROOT / 'tmp'))
     for f in os.listdir(DEMO_ROOT / 'tmp'):
         path = DEMO_ROOT / 'tmp' / Path(f)
-        subprocess.run([
-            'python3', ROOT / 'data_utils' / 'data_cli.py', 'cut',
-            path, YOUTUBE_INPUT_VIDEO_PATH,
-            '00:00:45', '00:00:50'
-        ])
+        cut_video(
+            str(path), str(YOUTUBE_INPUT_VIDEO_PATH),
+            parse_seconds_from_hh_mm_ss('00:00:45'),
+            parse_seconds_from_hh_mm_ss('00:00:50')
+        )
         shutil.rmtree(DEMO_ROOT / 'tmp')
-    draw_table(YOUTUBE_INPUT_VIDEO_PATH, YOUTUBE_LAYOUT_PATH, YOUTUBE_VIDEO_WITH_TABLE_PATH)
+    draw_table(str(YOUTUBE_INPUT_VIDEO_PATH), str(YOUTUBE_LAYOUT_PATH), str(YOUTUBE_VIDEO_WITH_TABLE_PATH))

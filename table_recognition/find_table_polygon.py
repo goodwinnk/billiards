@@ -228,15 +228,11 @@ def take_longest_sides_from_hull(hull, k):
     return np.array(khull, dtype=int)
 
 
-if __name__ == '__main__':
-    np.random.seed(42)
+# Takes video, finds tables polygon vertex coordinates for each frame and saves layout
+def find_table_layout(input_video_path, layout_path):
+    capture = cv2.VideoCapture(input_video_path)
 
-    args = parse_args()
-
-    capture = cv2.VideoCapture(args.video)
-    fps = int(np.round(capture.get(cv2.CAP_PROP_FPS)))
-
-    with open(args.layout, 'w') as layout_file:
+    with open(layout_path, 'w') as layout_file:
         while capture.isOpened():
             response, frame = capture.read()
 
@@ -252,3 +248,9 @@ if __name__ == '__main__':
             for x, y in hull:
                 layout_file.write(f'{x} {y} ')
             layout_file.write('\n')
+
+
+if __name__ == '__main__':
+    np.random.seed(42)
+    args = parse_args()
+    find_table_layout(args.video, args.layout)

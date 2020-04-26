@@ -1,6 +1,6 @@
 import argparse
+
 import cv2
-from data_utils.video_operations import save_frames_as_video
 import numpy as np
 
 
@@ -26,17 +26,16 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
-    args = parse_args()
-
-    capture = cv2.VideoCapture(args.video)
+# Takes video and layout of table in it, draws sides of the table and saves
+def highlight_table(input_video_path, layout_path, video_with_table_path):
+    capture = cv2.VideoCapture(input_video_path)
     fps = int(np.round(capture.get(cv2.CAP_PROP_FPS)))
 
     h = None
     w = None
     writer = None
 
-    with open(args.layout) as layout_file:
+    with open(layout_path) as layout_file:
         for line in layout_file:
             coordinates = list(map(int, line.strip().split(' ')))
             hull = [(coordinates[i + 1], coordinates[i]) for i in range(0, len(coordinates), 2)]
@@ -47,7 +46,7 @@ if __name__ == '__main__':
             if h is None:
                 h, w = frame.shape[: 2]
                 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-                writer = cv2.VideoWriter(args.output, fourcc, fps, (w, h))
+                writer = cv2.VideoWriter(video_with_table_path, fourcc, fps, (w, h))
 
             hull_size = len(hull)
 
@@ -60,3 +59,8 @@ if __name__ == '__main__':
             writer.write(frame)
 
     writer.release()
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    highlight_table(args.video, args.layout, args.output)

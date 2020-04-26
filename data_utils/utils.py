@@ -1,7 +1,9 @@
 import os
+from datetime import timedelta
 from typing import Optional
 
 import cv2
+import dateparser
 import numpy as np
 from pytube import YouTube
 
@@ -145,6 +147,12 @@ def play_with_move_detect(video_path: str, skip_seconds=0, stop_on_start=False):
                         frame_modifier=to_gray_gaussian,
                         stop_on_start=stop_on_start,
                         skip_seconds=skip_seconds)
+
+
+# Takes time in format hh:mm:ss and returns equal time in seconds
+def parse_seconds_from_hh_mm_ss(hh_mm_ss):
+    d = dateparser.parse(hh_mm_ss)
+    return timedelta(hours=d.hour, minutes=d.minute, seconds=d.second).total_seconds()
 
 
 # from_s: left bound in seconds

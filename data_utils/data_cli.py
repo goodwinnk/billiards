@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
-from data_utils.utils import download_youtube_video, extract_images_from_video, frame_by_frame_play, cut_video
-import dateparser
-from datetime import timedelta
+
+from data_utils.utils import extract_images_from_video, frame_by_frame_play, cut_video, parse_seconds_from_hh_mm_ss
 
 
 # def add_downloading_subparser(subparsers):
@@ -16,12 +15,8 @@ from datetime import timedelta
 
 def add_cut_subparser(subparsers):
     def run_cut(args):
-        def get_seconds(t):
-            d = dateparser.parse(t)
-            return timedelta(hours=d.hour, minutes=d.minute, seconds=d.second).total_seconds()
-
-        from_s = get_seconds(args.left)
-        to_s = get_seconds(args.right)
+        from_s = parse_seconds_from_hh_mm_ss(args.left)
+        to_s = parse_seconds_from_hh_mm_ss(args.right)
         cut_video(args.video_path, args.out_video_path, from_s, to_s)
 
     cut_parser = subparsers.add_parser('cut', help='Cut the video by time interval')

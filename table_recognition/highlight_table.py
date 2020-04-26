@@ -26,6 +26,16 @@ def parse_args():
     return parser.parse_args()
 
 
+def highlight_table_on_frame(frame, hull):
+    hull_size = len(hull)
+
+    for i in range(hull_size):
+        x1, y1 = hull[i]
+        x2, y2 = hull[(i + 1) % hull_size]
+        cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 4)
+        cv2.circle(frame, (x1, y1), 10, (0, 0, 255), 4)
+
+
 # Takes video and layout of table in it, draws sides of the table and saves
 def highlight_table(input_video_path, layout_path, video_with_table_path):
     capture = cv2.VideoCapture(input_video_path)
@@ -48,13 +58,7 @@ def highlight_table(input_video_path, layout_path, video_with_table_path):
                 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
                 writer = cv2.VideoWriter(video_with_table_path, fourcc, fps, (w, h))
 
-            hull_size = len(hull)
-
-            for i in range(hull_size):
-                x1, y1 = hull[i]
-                x2, y2 = hull[(i + 1) % hull_size]
-                cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 4)
-                cv2.circle(frame, (x1, y1), 10, (0, 0, 255), 4)
+            highlight_table_on_frame(frame, hull)
 
             writer.write(frame)
 

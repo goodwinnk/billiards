@@ -2,10 +2,14 @@ import argparse
 import math
 from collections import deque
 from copy import deepcopy
+from typing import Iterable, Tuple
 
 import cv2
 import numpy as np
 from scipy.spatial import ConvexHull
+
+
+FRAMES_TO_DETECT_TABLE = 40
 
 
 # finds mask for convex polygon on the image of given size
@@ -154,6 +158,9 @@ def find_table_polygon(
     max_line_gap = 0
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 50, min_line_length, max_line_gap)
 
+    if lines is None or len(lines) < 3:
+        return None
+
     points = np.array([(0, 0) for _ in range(2 * len(lines[:, 0, :]))])
 
     for i, (x1, y1, x2, y2) in enumerate(lines[:, 0, :]):
@@ -248,6 +255,51 @@ def find_table_layout(input_video_path, layout_path):
             for x, y in hull:
                 layout_file.write(f'{x} {y} ')
             layout_file.write('\n')
+
+
+# Calculates hulls for provides frames
+def get_table_hulls(frames: Iterable[np.array], resolution: Tuple[int]):
+    center = np.array(resolution)[::-1] // 2
+    layout = []
+
+    for frame in frames:
+        hull = find_table_polygon(deepcopy(frame))
+        if hull is None:
+            layout.append(np.zeros((4, 2), dtype=np.int32))
+            continue
+
+        hull = remove_big_angles_from_hull(hull)
+        hull = take_longest_sides_from_hull(hull, 4)
+
+        center_vectors = hull - center
+        angles = np.arctan2(center_vectors[:, 0], center_vectors[:, 1])
+        hull_point_indices = np.argsort(angles)
+        hull = hull[hull_point_indices]
+
+        layout.append(hull)
+    return np.array(layout, dtype=np.int32)
+
+
+# Reads FRAMES_TO_DETECT_TABLE from the provided video capture
+# Changes the CAP_PROP_POS_FRAMES position in the video capture
+def read_frames(video: cv2.VideoCapture):
+    frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    step = int(frame_count / FRAMES_TO_DETECT_TABLE)
+    for frame_number in range(0, frame_count, step):
+        video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        response, frame = video.read()
+        yield frame
+
+
+# Calculates FRAMES_TO_DETECT_TABLE table hulls for the provided video and averages the good ones.
+# Currently hulls with negative coordinates are discarded.
+# Returns a table mask
+def calc_mask(video: cv2.VideoCapture):
+    resolution = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    hulls = get_table_hulls(read_frames(video), resolution)
+    relevant_hulls = hulls.all(axis=(1, 2))
+    mean_hull = hulls[relevant_hulls].mean(axis=0).astype(np.int32)
+    return find_convex_hull_mask(resolution, mean_hull)
 
 
 if __name__ == '__main__':

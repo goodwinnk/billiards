@@ -20,7 +20,9 @@ def download_youtube_video(url, output_path: Optional[str] = None):
 # 's' save current frame
 def frame_by_frame_play(
         video_path: str,
-        skip_seconds=0, stop_on_start=False,
+        skip_seconds=0,
+        start_from_frame: Optional[int] = None,
+        stop_on_start=False,
         frame_save_modifier="mod",
         frame_output_path: Optional[str] = None,
         frame_modifier=lambda frame, index: frame):
@@ -33,6 +35,9 @@ def frame_by_frame_play(
     video = cv2.VideoCapture(video_path)
     fps = int(video.get(cv2.CAP_PROP_FPS))
     video.set(cv2.CAP_PROP_POS_FRAMES, int(skip_seconds * fps))
+
+    if start_from_frame is not None:
+        video.set(cv2.CAP_PROP_POS_FRAMES, start_from_frame)
 
     is_paused = stop_on_start
     is_origin_frame = False

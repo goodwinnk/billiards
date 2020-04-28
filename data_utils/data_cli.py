@@ -1,16 +1,17 @@
 from argparse import ArgumentParser
 
-from data_utils.utils import extract_images_from_video, frame_by_frame_play, cut_video, parse_seconds_from_hh_mm_ss
+from data_utils.utils import extract_images_from_video, frame_by_frame_play, cut_video, parse_seconds_from_hh_mm_ss, \
+    download_youtube_video
 
 
-# def add_downloading_subparser(subparsers):
-#     def run_downloading(args):
-#         download_youtube_video(args.url, out_dir_path=args.out_dir_path, fix_name=True)
-#
-#     downloading_parser = subparsers.add_parser('download', help='Download video from YouTube')
-#     downloading_parser.add_argument('url')
-#     downloading_parser.add_argument('out_dir_path', default='.')
-#     downloading_parser.set_defaults(func=run_downloading)
+def add_downloading_subparser(subparsers):
+    def run_downloading(args):
+        download_youtube_video(args.url, output_path=args.output_path)
+
+    downloading_parser = subparsers.add_parser('download', help='Download video from YouTube')
+    downloading_parser.add_argument('url')
+    downloading_parser.add_argument('output_path', default=None)
+    downloading_parser.set_defaults(func=run_downloading)
 
 
 def add_cut_subparser(subparsers):
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     subparsers = argument_parser.add_subparsers(dest='command')
     subparsers.required = True
 
-    # add_downloading_subparser(subparsers)
+    add_downloading_subparser(subparsers)
     add_extract_subparser(subparsers)
     add_extract_manual_subparser(subparsers)
     add_cut_subparser(subparsers)

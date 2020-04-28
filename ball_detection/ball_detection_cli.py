@@ -106,7 +106,7 @@ if __name__ == '__main__':
     hough_parser = subparsers.add_parser('candidates_hough')
     hough_parser.add_argument('data_dir', type=Path)
     hough_parser.add_argument('picture_name_template')
-    hough_parser.add_argument('-o', '--output_filename', default='candidates.json')
+    hough_parser.add_argument('-o', '--output_filename', default='candidates_h.json')
     hough_parser.add_argument('-m', '--table_mask_filename', default='table_mask.png')
     hough_parser.set_defaults(func=extract_candidates_hough)
 

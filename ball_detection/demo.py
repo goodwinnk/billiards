@@ -1,19 +1,26 @@
+import numpy as np
 import cv2
 
 from data_utils.utils import frame_by_frame_play
 from ball_detection import BallDetector, visualize_balls
 from ball_detection.candidate_generation_hough import HoughCircleDetector
+from ball_detection.candidate_generation_motion import MotionDetector
 
 
 WEIGHTS_PATH = 'ball_detection/candidate_classifier/weights.pt'
-DATA_DIR = 'data/sync/resources/012'
-VIDEO_PATH = DATA_DIR + '/video012.mp4'
+DATA_DIR = 'data/sync/resources/010'
+VIDEO_PATH = DATA_DIR + '/video010.mp4'
 TABLE_MASK_PATH = DATA_DIR + '/table_mask.png'
+BACKGROUND_PATH = DATA_DIR + '/background.png'
 
 
 table_mask = cv2.imread(TABLE_MASK_PATH)[:, :, 0]
-candidate_generator = HoughCircleDetector(table_mask)
-detector = BallDetector(candidate_generator)
+background = cv2.imread(BACKGROUND_PATH)
+candidate_generators = [
+    HoughCircleDetector(table_mask),
+    MotionDetector(table_mask.astype(np.bool), background)
+]
+detector = BallDetector(candidate_generators)
 
 
 def highlight_balls(image, index):

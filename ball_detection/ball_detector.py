@@ -1,9 +1,10 @@
 from enum import Enum
+from itertools import chain
 
 import torch
 import cv2
 
-from ball_detection.candidate_classifier.model import Net, CLASSIFICATION_SCORE_THRESHOLD
+from ball_detection.candidate_classifier.model import Net
 from ball_detection.candidate_classifier.data_preprocessing import cut_boxes
 
 
@@ -28,8 +29,8 @@ def visualize_balls(image, balls):
 
 
 class BallDetector:
-    def __init__(self, candidate_generator, net_path='ball_detection/candidate_classifier/weights.pt'):
-        self.candidate_generator = candidate_generator
+    def __init__(self, candidate_generators, net_path='ball_detection/candidate_classifier/weights.pt'):
+        self.candidate_generators = candidate_generators
         self.classifier = Net()
         self.classifier.load_state_dict(torch.load(net_path))
 
@@ -42,7 +43,9 @@ class BallDetector:
         return prediction
 
     def get_balls(self, image):
-        candidate_regions = self.candidate_generator.get_regions(image)
+        candidate_regions = list(chain(
+            *(candidate_generator.get_regions(image) for candidate_generator in self.candidate_generators)
+        ))
         box_cuts = cut_boxes(image, (box for _, box in candidate_regions))
         if not len(box_cuts):
             return []

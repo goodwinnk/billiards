@@ -3,7 +3,6 @@ from typing import Dict, List
 from enum import Enum
 import cv2
 import numpy as np
-import math
 
 
 class BallColor(Enum):
@@ -44,12 +43,35 @@ class Board:
         :param x: the horizontal pixel shape of the model picture.
         :param y: the vertical pixel shape of the model picture.
         """
+        self.img_sz = (x, y)
+        self.balls = []
+
         if len(init_table) != 4:
             raise AttributeError('Table array should contain only 4 points: the billiard table corners.')
-        self.init_table = init_table
-        self.X = x
-        self.Y = y
-        self.balls = []
+        self.A, self.B, self.C, self.D = tuple(init_table)
+        self.P = self.Q = self.line = self.X1 = self.X2 = self.Y1 = self.Y2 = None
+
+        i1 = geom.intersection(geom.Line2D(self.A, self.B), geom.Line2D(self.C, self.D))
+        if len(i1) == 1:
+            self.P = i1[0]
+        i2 = geom.intersection(geom.Line2D(self.A, self.D), geom.Line2D(self.C, self.B))
+        if len(i2) == 1:
+            self.Q = i2[0]
+        if self.P is not None and self.Q is not None:
+            self.line = geom.Line2D(self.P, self.Q).parallel_line(self.B)
+        elif self.P is not None and self.Q is None:
+            self.line = geom.Line2D(self.A, self.D).parallel_line(self.P)
+        elif self.P is None and self.Q is not None:
+            self.line = geom.Line2D(self.A, self.B).parallel_line(self.Q)
+
+        if self.P is not None:
+            self.Y1 = geom.intersection(geom.Line2D(self.D, self.C), self.line)[0]
+            self.Y2 = self.B
+            self.y_len = self.Y1.distance(self.Y2)
+        if self.Q is not None:
+            self.X1 = geom.intersection(geom.Line2D(self.D, self.A), self.line)[0]
+            self.X2 = self.B
+            self.x_len = self.X1.distance(self.X2)
 
     def add_balls(self, added_balls: Dict[BallColor, geom.Point2D]):
         """
@@ -71,27 +93,21 @@ class Board:
         """
         Calculate the model coordinates of the pos point inside the init table.
         """
-        def cross_product(p1: geom.Point2D, p2: geom.Point2D):
-            return p1[0] * p2[1] - p1[1] * p2[0]
-
-        def get_x_coeff(a, b, c, d, o):
-            k0 = cross_product(a - o, d - o)
-            k1 = cross_product(b - a, d - o) + cross_product(a - o, c - d)
-            k2 = cross_product(b - a, c - d)
-            # k0 + k1 * x + k2 * x**2 = 0
-            if k2 == 0:
-                return -k0 / k1
-            ed = math.sqrt(k1 ** 2 - 4 * k0 * k2)
-            x1 = (-k1 + ed) / (2 * k2)
-            if 0 <= x1 <= 1:
-                return x1
-            x2 = (-k1 - ed) / (2 * k2)
-            return x2
-
-        a, b, c, d = tuple(self.init_table)
-        x = round(get_x_coeff(a, b, c, d, pos) * self.X)
-        y = round(get_x_coeff(a, d, c, b, pos) * self.Y)
-        return geom.Point(x, y)
+        if self.Q is not None:
+            k = geom.intersection(geom.Line2D(self.Q, pos), self.line)[0]
+            x_coeff = self.X1.distance(k) / self.x_len
+        else:
+            x_coeff = pos.distance(geom.Line2D(self.A, self.D)) /\
+                self.B.distance(geom.Line2D(self.A, self.D))
+        if self.P is not None:
+            m = geom.intersection(geom.Line2D(self.P, pos), self.line)[0]
+            y_coeff = self.Y1.distance(m) / self.y_len
+        else:
+            y_coeff = pos.distance(geom.Line2D(self.C, self.D)) /\
+                self.D.distance(geom.Line2D(self.A, self.B))
+        x = round(x_coeff * self.img_sz[0])
+        y = round(y_coeff * self.img_sz[1])
+        return x, y
 
     def to_image(self):
         """
@@ -101,7 +117,13 @@ class Board:
         table_color = [50, 170, 50]
         white = [255, 255, 255]
         black = [0, 0, 0]
-        image = np.float32([[table_color for _ in range(self.X)] for _ in range(self.Y)])
+        brown = [20, 70, 140]
+        image = np.float32([[table_color for _ in range(self.img_sz[0])] for _ in range(self.img_sz[1])])
+
+        r = 20  # ball radius
+        for x in [0, self.img_sz[0]]:
+            for y in [0, self.img_sz[1] // 2, self.img_sz[1]]:
+                cv2.circle(image, (x, y), 2 * r, brown, thickness=-1)
         colors = [black,
                   [0, 255, 255],   # yellow
                   [255, 0, 0],     # blue
@@ -126,8 +148,7 @@ class Board:
         for color, pos in self.balls:
             v = color.value
             c = colors[v % 8] if v != 16 else colors[-1]
-            r = 20
-            new_pos = (pos[0], self.Y - pos[1])
+            new_pos = (pos[0], pos[1])
             if 9 <= v <= 15:
                 cv2.circle(image, new_pos, r, white, thickness=-1)
                 cv2.circle(image, new_pos, r - 4, c, thickness=-1)
@@ -142,7 +163,10 @@ class Board:
 
 
 if __name__ == '__main__':
+    # These table coordinates form a rectangular for simplicity reasons,
+    # nevertheless, it is possible for them to form any convex quadrangle.
     table = [geom.Point(0, 0), geom.Point(10, 0), geom.Point(10, 10), geom.Point(0, 10)]
+
     balls = {BallColor.YELLOW_SOLID: geom.Point(5, 5),
              BallColor.BLUE_SOLID: geom.Point(1, 1),
              BallColor.RED_SOLID: geom.Point(7, 2),
@@ -165,3 +189,4 @@ if __name__ == '__main__':
 
     img = board.to_image()
     cv2.imwrite('../data/sync/billiard_model_example.jpg', img)
+

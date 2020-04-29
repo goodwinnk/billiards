@@ -22,6 +22,22 @@ def test_game_model():
             {(BallColor.WHITE, (6, 10)),
              (BallColor.BLACK, (8, 2))}
         ),
+        (
+            2, 4,
+            [geom.Point(0, 0), geom.Point(3, 0), geom.Point(3, 3), geom.Point(0, 6)],
+            {BallColor.WHITE: geom.Point(2, 2),
+             BallColor.BLACK: geom.Point(2, 1)},
+            {(BallColor.WHITE, (1, 2)),
+             (BallColor.BLACK, (1, 3))}
+        ),
+        (
+            4, 4,
+            [geom.Point(0, 0), geom.Point(6, 0), geom.Point(5, 3), geom.Point(2, 3)],
+            {BallColor.WHITE: geom.Point(3, 2),
+             BallColor.BLACK: geom.Point(5, 3)},
+            {(BallColor.WHITE, (2, 2)),
+             (BallColor.BLACK, (4, 0))}
+        ),
     ]
     for X, Y, table, balls, expected in tests:
         b = Board(table, X, Y)

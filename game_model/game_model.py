@@ -49,7 +49,7 @@ class Board:
         if len(init_table) != 4:
             raise AttributeError('Table array should contain only 4 points: the billiard table corners.')
         self.A, self.B, self.C, self.D = tuple(init_table)
-        self.P = self.Q = self.line = self.X1 = self.X2 = self.Y1 = self.Y2 = None
+        self.P = self.Q = self.line = self.X1 = self.X2 = self.Y1 = self.Y2 = self.x_len = self.y_len = None
 
         i1 = geom.intersection(geom.Line2D(self.A, self.B), geom.Line2D(self.C, self.D))
         if len(i1) == 1:
@@ -60,18 +60,16 @@ class Board:
         if self.P is not None and self.Q is not None:
             self.line = geom.Line2D(self.P, self.Q).parallel_line(self.B)
         elif self.P is not None and self.Q is None:
-            self.line = geom.Line2D(self.A, self.D).parallel_line(self.P)
+            self.line = geom.Line2D(self.B, self.C)
         elif self.P is None and self.Q is not None:
-            self.line = geom.Line2D(self.A, self.B).parallel_line(self.Q)
+            self.line = geom.Line2D(self.A, self.B)
 
         if self.P is not None:
             self.Y1 = geom.intersection(geom.Line2D(self.D, self.C), self.line)[0]
-            self.Y2 = self.B
-            self.y_len = self.Y1.distance(self.Y2)
+            self.y_len = self.Y1.distance(self.B)
         if self.Q is not None:
             self.X1 = geom.intersection(geom.Line2D(self.D, self.A), self.line)[0]
-            self.X2 = self.B
-            self.x_len = self.X1.distance(self.X2)
+            self.x_len = self.X1.distance(self.B)
 
     def add_balls(self, added_balls: Dict[BallColor, geom.Point2D]):
         """
@@ -93,18 +91,27 @@ class Board:
         """
         Calculate the model coordinates of the pos point inside the init table.
         """
-        if self.Q is not None:
-            k = geom.intersection(geom.Line2D(self.Q, pos), self.line)[0]
-            x_coeff = self.X1.distance(k) / self.x_len
+
+        def get_coeff(p, x, x_len, a, b, c, d):
+            if p is not None:
+                k = geom.intersection(geom.Line2D(p, pos), self.line)[0]
+                return x.distance(k) / x_len
+            k1 = a.distance(d)
+            k2 = b.distance(c)
+            ln = geom.Line2D(a, d).parallel_line(pos)
+            g1 = geom.intersection(ln, geom.Line2D(a, b))[0]
+            g2 = geom.intersection(ln, geom.Line2D(c, d))[0]
+            k3 = g1.distance(g2)
+            return k2 * (k3 - k1) / (k3 * (k2 - k1))
+
+        if self.P is None and self.Q is None:
+            l1 = geom.Line2D(self.A, self.D)
+            l2 = geom.Line2D(self.C, self.D)
+            x_coeff = pos.distance(l1) / self.B.distance(l1)
+            y_coeff = pos.distance(l2) / self.B.distance(l2)
         else:
-            x_coeff = pos.distance(geom.Line2D(self.A, self.D)) /\
-                self.B.distance(geom.Line2D(self.A, self.D))
-        if self.P is not None:
-            m = geom.intersection(geom.Line2D(self.P, pos), self.line)[0]
-            y_coeff = self.Y1.distance(m) / self.y_len
-        else:
-            y_coeff = pos.distance(geom.Line2D(self.C, self.D)) /\
-                self.D.distance(geom.Line2D(self.A, self.B))
+            x_coeff = get_coeff(self.Q, self.X1, self.x_len, self.A, self.B, self.C, self.D)
+            y_coeff = get_coeff(self.P, self.Y1, self.y_len, self.D, self.A, self.B, self.C)
         x = round(x_coeff * self.img_sz[0])
         y = round(y_coeff * self.img_sz[1])
         return x, y
@@ -189,4 +196,3 @@ if __name__ == '__main__':
 
     img = board.to_image()
     cv2.imwrite('../data/sync/billiard_model_example.jpg', img)
-

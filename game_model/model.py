@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 
-class BallColor(Enum):
+class BallType(Enum):
     """
     The billiard balls colors enum.
     """
@@ -25,6 +25,37 @@ class BallColor(Enum):
     GREEN_STRIPED = 14
     MAROON_STRIPED = 15
     WHITE = 16
+
+    def is_striped(self):
+        return 9 <= self.value <= 15
+
+    def is_solid(self):
+        return 1 <= self.value <= 7
+
+    def label(self) -> str:
+        return str(self.value) if self != BallType.WHITE else ""
+
+
+class Colors:
+    table_color = [50, 170, 50]
+    white = [255, 255, 255]
+    black = [0, 0, 0]
+    brown = [20, 70, 140]
+
+    __ball_colors = [black,
+              [0, 255, 255],  # yellow
+              [255, 0, 0],  # blue
+              [0, 0, 255],  # red
+              [150, 50, 90],  # purple
+              [0, 150, 255],  # orange
+              [0, 255, 0],  # green
+              [0, 30, 150],  # maroon
+              white]
+
+    @staticmethod
+    def main_ball_color(ball_type: BallType):
+        return Colors.__ball_colors[ball_type.value % 8] \
+            if ball_type != BallType.WHITE else Colors.__ball_colors[-1]
 
 
 class Board:
@@ -71,7 +102,7 @@ class Board:
             self.X1 = geom.intersection(geom.Line2D(self.D, self.A), self.line)[0]
             self.x_len = self.X1.distance(self.B)
 
-    def add_balls(self, added_balls: Dict[BallColor, geom.Point2D]):
+    def add_balls(self, added_balls: Dict[BallType, geom.Point2D]):
         """
         Adds the given billiard balls coordinates to the table model.
         :param added_balls: the ball color (see class BallColor) with ball coordinate point on the image
@@ -121,25 +152,12 @@ class Board:
         Returns the model representation of the current Board state.
         :return: image (np.array) of shape (X, Y) with all the added balls.
         """
-        table_color = [50, 170, 50]
-        white = [255, 255, 255]
-        black = [0, 0, 0]
-        brown = [20, 70, 140]
-        image = np.float32([[table_color for _ in range(self.img_sz[0])] for _ in range(self.img_sz[1])])
+        image = np.float32([[Colors.table_color for _ in range(self.img_sz[0])] for _ in range(self.img_sz[1])])
 
         r = 20  # ball radius
         for x in [0, self.img_sz[0]]:
             for y in [0, self.img_sz[1] // 2, self.img_sz[1]]:
-                cv2.circle(image, (x, y), 2 * r, brown, thickness=-1)
-        colors = [black,
-                  [0, 255, 255],   # yellow
-                  [255, 0, 0],     # blue
-                  [0, 0, 255],     # red
-                  [150, 50, 90],   # purple
-                  [0, 150, 255],   # orange
-                  [0, 255, 0],     # green
-                  [0, 30, 150],    # maroon
-                  white]
+                cv2.circle(image, (x, y), 2 * r, Colors.brown, thickness=-1)
 
         font = cv2.FONT_HERSHEY_PLAIN
         font_scale = 1.0
@@ -152,19 +170,18 @@ class Board:
             return (center_point_x - text_sz_x // 2,
                     center_point_y + text_sz_y // 2)
 
-        for color, pos in self.balls:
-            v = color.value
-            c = colors[v % 8] if v != 16 else colors[-1]
+        for ball, pos in self.balls:
+            ball_color = Colors.main_ball_color(ball)
             new_pos = (pos[0], pos[1])
-            if 9 <= v <= 15:
-                cv2.circle(image, new_pos, r, white, thickness=-1)
-                cv2.circle(image, new_pos, r - 4, c, thickness=-1)
+            if ball.is_striped():
+                cv2.circle(image, new_pos, r, Colors.white, thickness=-1)
+                cv2.circle(image, new_pos, r - 4, ball_color, thickness=-1)
             else:
-                cv2.circle(image, new_pos, r, c, thickness=-1)
-            cv2.circle(image, new_pos, r // 2, white, thickness=-1)
-            label = str(v) if v != 16 else ""
+                cv2.circle(image, new_pos, r, ball_color, thickness=-1)
+            cv2.circle(image, new_pos, r // 2, Colors.white, thickness=-1)
+            label = ball.label()
             cv2.putText(image, label, get_text_start_point(new_pos, label),
-                        font, thickness=thickness, color=black, fontScale=font_scale)
+                        font, thickness=thickness, color=Colors.black, fontScale=font_scale)
 
         return image
 
@@ -174,22 +191,22 @@ if __name__ == '__main__':
     # nevertheless, it is possible for them to form any convex quadrangle.
     table = [geom.Point(0, 0), geom.Point(10, 0), geom.Point(10, 10), geom.Point(0, 10)]
 
-    balls = {BallColor.YELLOW_SOLID: geom.Point(5, 5),
-             BallColor.BLUE_SOLID: geom.Point(1, 1),
-             BallColor.RED_SOLID: geom.Point(7, 2),
-             BallColor.PURPLE_SOLID: geom.Point(2, 7),
-             BallColor.ORANGE_SOLID: geom.Point(7, 7),
-             BallColor.GREEN_SOLID: geom.Point(4, 5),
-             BallColor.MAROON_SOLID: geom.Point(5, 3),
-             BallColor.BLACK: geom.Point(9, 6),
-             BallColor.YELLOW_STRIPED: geom.Point(2, 8),
-             BallColor.BLUE_STRIPED: geom.Point(2, 4),
-             BallColor.RED_STRIPED: geom.Point(9, 9),
-             BallColor.PURPLE_STRIPED: geom.Point(3, 6),
-             BallColor.ORANGE_STRIPED: geom.Point(6, 3),
-             BallColor.GREEN_STRIPED: geom.Point(6, 8),
-             BallColor.MAROON_STRIPED: geom.Point(3, 4),
-             BallColor.WHITE: geom.Point(5, 9)}
+    balls = {BallType.YELLOW_SOLID: geom.Point(5, 5),
+             BallType.BLUE_SOLID: geom.Point(1, 1),
+             BallType.RED_SOLID: geom.Point(7, 2),
+             BallType.PURPLE_SOLID: geom.Point(2, 7),
+             BallType.ORANGE_SOLID: geom.Point(7, 7),
+             BallType.GREEN_SOLID: geom.Point(4, 5),
+             BallType.MAROON_SOLID: geom.Point(5, 3),
+             BallType.BLACK: geom.Point(9, 6),
+             BallType.YELLOW_STRIPED: geom.Point(2, 8),
+             BallType.BLUE_STRIPED: geom.Point(2, 4),
+             BallType.RED_STRIPED: geom.Point(9, 9),
+             BallType.PURPLE_STRIPED: geom.Point(3, 6),
+             BallType.ORANGE_STRIPED: geom.Point(6, 3),
+             BallType.GREEN_STRIPED: geom.Point(6, 8),
+             BallType.MAROON_STRIPED: geom.Point(3, 4),
+             BallType.WHITE: geom.Point(5, 9)}
 
     board = Board(table)
     board.add_balls(balls)

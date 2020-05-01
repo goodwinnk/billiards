@@ -1,45 +1,38 @@
-from game_model.model import Board, BallColor
+from game_model.model import Board, BallType, Colors
 import sympy.geometry as geom
 import cv2
 import json
+from table_recognition.highlight_table import highlight_table_on_frame
+
+
+def make_point(o):
+    x, y = tuple(o)
+    return geom.Point2D(x, y)
+
 
 if __name__ == '__main__':
-    img = cv2.imread('../data/sync/game_model_demo/image.jpg')
     with open('../data/sync/game_model_demo/coordinates.json', 'r') as f:
         text = ''.join(f.readlines())
         data = json.loads(text)
-    a, b, c, d = tuple(data['table'])
 
-
-    def make_point(o):
-        x, y = tuple(o)
-        return geom.Point2D(x, y)
-
-
-    b = Board([make_point(a), make_point(b), make_point(c), make_point(d)])
-    switcher = {
-        'yellow_solid': BallColor.YELLOW_SOLID,
-        'blue_solid': BallColor.BLUE_SOLID,
-        'red_solid': BallColor.RED_SOLID,
-        'purple_solid': BallColor.PURPLE_SOLID,
-        'orange_solid': BallColor.ORANGE_SOLID,
-        'green_solid': BallColor.GREEN_SOLID,
-        'maroon_solid': BallColor.MAROON_SOLID,
-        'black': BallColor.BLACK,
-        'yellow_striped': BallColor.YELLOW_STRIPED,
-        'blue_striped': BallColor.BLUE_STRIPED,
-        'red_striped': BallColor.RED_STRIPED,
-        'purple_striped': BallColor.PURPLE_STRIPED,
-        'orange_striped': BallColor.ORANGE_STRIPED,
-        'green_striped': BallColor.GREEN_STRIPED,
-        'maroon_striped': BallColor.MAROON_STRIPED,
-        'white': BallColor.WHITE,
-    }
+    table_corners = data['table']
     balls = {}
-    for key, val in data.items():
-        if key != 'table':
-            x, y = tuple(val)
-            balls[switcher[key]] = geom.Point2D(x, y)
-    b.add_balls(balls)
+    for key, val in data["balls"].items():
+        balls[BallType[key.upper()]] = make_point(val)
 
+    # sample image
+    img = cv2.imread('../data/sync/game_model_demo/image.jpg')
+    sample_input = img.copy()
+    highlight_table_on_frame(sample_input, table_corners)
+    for ball, point in balls.items():
+        cv2.circle(sample_input,
+                   (point.x, point.y),
+                   radius=20, color=Colors.main_ball_color(ball),
+                   thickness=6 if ball.is_solid() else 2)
+    cv2.imwrite("../data/sync/game_model_demo/sample_input.jpg", sample_input)
+
+    # model demo
+    a, b, c, d = tuple(table_corners)
+    b = Board([make_point(a), make_point(b), make_point(c), make_point(d)])
+    b.add_balls(balls)
     cv2.imwrite('../data/sync/game_model_demo/result.jpg', b.to_image())

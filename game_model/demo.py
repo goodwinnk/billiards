@@ -1,4 +1,4 @@
-import game_model as gm
+from game_model.model import Board, BallColor
 import sympy.geometry as geom
 import cv2
 import json
@@ -16,24 +16,24 @@ if __name__ == '__main__':
         return geom.Point2D(x, y)
 
 
-    b = gm.Board([make_point(a), make_point(b), make_point(c), make_point(d)])
+    b = Board([make_point(a), make_point(b), make_point(c), make_point(d)])
     switcher = {
-        'yellow_solid': gm.BallColor.YELLOW_SOLID,
-        'blue_solid': gm.BallColor.BLUE_SOLID,
-        'red_solid': gm.BallColor.RED_SOLID,
-        'purple_solid': gm.BallColor.PURPLE_SOLID,
-        'orange_solid': gm.BallColor.ORANGE_SOLID,
-        'green_solid': gm.BallColor.GREEN_SOLID,
-        'maroon_solid': gm.BallColor.MAROON_SOLID,
-        'black': gm.BallColor.BLACK,
-        'yellow_striped': gm.BallColor.YELLOW_STRIPED,
-        'blue_striped': gm.BallColor.BLUE_STRIPED,
-        'red_striped': gm.BallColor.RED_STRIPED,
-        'purple_striped': gm.BallColor.PURPLE_STRIPED,
-        'orange_striped': gm.BallColor.ORANGE_STRIPED,
-        'green_striped': gm.BallColor.GREEN_STRIPED,
-        'maroon_striped': gm.BallColor.MAROON_STRIPED,
-        'white': gm.BallColor.WHITE,
+        'yellow_solid': BallColor.YELLOW_SOLID,
+        'blue_solid': BallColor.BLUE_SOLID,
+        'red_solid': BallColor.RED_SOLID,
+        'purple_solid': BallColor.PURPLE_SOLID,
+        'orange_solid': BallColor.ORANGE_SOLID,
+        'green_solid': BallColor.GREEN_SOLID,
+        'maroon_solid': BallColor.MAROON_SOLID,
+        'black': BallColor.BLACK,
+        'yellow_striped': BallColor.YELLOW_STRIPED,
+        'blue_striped': BallColor.BLUE_STRIPED,
+        'red_striped': BallColor.RED_STRIPED,
+        'purple_striped': BallColor.PURPLE_STRIPED,
+        'orange_striped': BallColor.ORANGE_STRIPED,
+        'green_striped': BallColor.GREEN_STRIPED,
+        'maroon_striped': BallColor.MAROON_STRIPED,
+        'white': BallColor.WHITE,
     }
     balls = {}
     for key, val in data.items():

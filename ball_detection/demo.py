@@ -6,6 +6,7 @@ from ball_detection import BallDetector, visualize_balls
 from ball_detection.candidate_generation_hough import HoughCircleDetector
 from ball_detection.candidate_generation_motion import MotionDetector
 
+# Project directory root should be used as working directory
 
 WEIGHTS_PATH = 'ball_detection/candidate_classifier/weights.pt'
 DATA_DIR = 'data/sync/resources/010'
@@ -20,10 +21,10 @@ candidate_generators = [
     HoughCircleDetector(table_mask),
     MotionDetector(table_mask.astype(np.bool), background)
 ]
-detector = BallDetector(candidate_generators)
+detector = BallDetector(candidate_generators, net_path=WEIGHTS_PATH)
 
 
-def highlight_balls(image, index):
+def highlight_balls(image, _):
     balls = detector.get_balls(image)
     return visualize_balls(image, balls)
 

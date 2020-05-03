@@ -47,7 +47,7 @@ def flip(image):
 
 
 def gamma_transformation(image):
-    gamma = np.random.normal(1, GAMMA_STD)
+    gamma = np.exp(np.random.normal(0, GAMMA_STD))
     return image ** gamma
 
 

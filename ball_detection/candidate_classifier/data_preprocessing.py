@@ -20,7 +20,7 @@ def cut_boxes(image, regions):
     for x0, x1, y0, y1 in regions:
         box = image[y0:y1, x0:x1]
         box = cv2.resize(box, NET_INPUT_SIZE)
-        box = box / 255
+        box = np.float32(box) / 255
         boxes.append(box)
     boxes = np.array(boxes)
     return boxes
@@ -57,7 +57,7 @@ def read_data(data_dir, markup_filename='markup.json'):
 def read_dir(dir_path):
     images = [cv2.imread(str(file_dir)) for file_dir in dir_path.glob('*')]
     images = list(filter(lambda x: x is not None, images))
-    return np.array(images) / 255
+    return np.float32(images) / 255
 
 
 def read_dataset_folder(data_dir=Path('data/sync/dataset_solid_striped_sep')):

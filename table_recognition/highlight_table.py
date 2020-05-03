@@ -32,8 +32,9 @@ def highlight_table_on_frame(frame, hull):
     for i in range(hull_size):
         x1, y1 = hull[i]
         x2, y2 = hull[(i + 1) % hull_size]
-        cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 4)
+        cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
         cv2.circle(frame, (x1, y1), 10, (0, 0, 255), 4)
+        cv2.putText(frame, str(i + 1), (x1 - 5, y1 + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
 
 # Takes video and layout of table in it, draws sides of the table and saves

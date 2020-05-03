@@ -243,10 +243,25 @@ def find_table_layout_on_frame(frame) -> np.ndarray:
     return hull
 
 
+# finds cyclic shift such that the sum of distances between corresponding vertices in previous hull and shifted current
+# hull is minimal and returns best shifted hull
+def find_hull_vertices_matching(previous_hull, current_hull):
+    current_hull = deepcopy(current_hull)
+    best_shifted_hull = current_hull
+    best_distance = np.linalg.norm(current_hull - previous_hull)
+    for i in range(len(current_hull)):
+        tmp_hull = np.concatenate((current_hull[i:], current_hull[: i]))
+        tmp_distance = np.linalg.norm(tmp_hull - previous_hull)
+        if tmp_distance < best_distance:
+            best_shifted_hull, best_distance = tmp_hull, tmp_distance
+    return best_shifted_hull
+
+
 # Takes video, finds tables polygon vertex coordinates for each frame and saves layout
 def find_table_layout(input_video_path, layout_path):
     capture = cv2.VideoCapture(input_video_path)
 
+    previous_hull = None
     with open(layout_path, 'w') as layout_file:
         while capture.isOpened():
             response, frame = capture.read()
@@ -255,6 +270,9 @@ def find_table_layout(input_video_path, layout_path):
                 break
 
             hull = find_table_layout_on_frame(frame)[:, ::-1]
+            if previous_hull is not None:
+                hull = find_hull_vertices_matching(previous_hull, hull)
+            previous_hull = deepcopy(hull)
 
             for x, y in hull:
                 layout_file.write(f'{x} {y} ')

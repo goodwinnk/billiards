@@ -17,11 +17,15 @@ VIS_COLORS = {
 
 def visualize_balls(image, balls):
     visualization = image.copy()
+    return visualize_balls_on_image(visualization, balls)
+
+
+def visualize_balls_on_image(image, balls):
     if not len(balls):
-        return visualization
+        return image
     for _, (x0, x1, y0, y1), ball_type in balls:
-        cv2.rectangle(visualization, (x0, y0), (x1, y1), VIS_COLORS[ball_type], 3)
-    return visualization
+        cv2.rectangle(image, (x0, y0), (x1, y1), VIS_COLORS[ball_type], 3)
+    return image
 
 
 class BallDetector:

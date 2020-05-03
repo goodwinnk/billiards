@@ -43,7 +43,7 @@ def color(image):
 
 
 def flip(image):
-    return image[:, ::-1]
+    return cv2.flip(image, flipCode=1)
 
 
 def gamma_transformation(image):

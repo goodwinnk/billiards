@@ -1,38 +1,44 @@
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 
 from ball_detection.candidate_classifier.model import Net
-from ball_detection.candidate_classifier.augmentations import AugmentationApplier
 
 
-def train(n_epochs: int, model: Net, x_train: np.array, y_train: np.array, x_val: np.array, y_val: np.array,
-          lr: float = 1e-2, weight_decay: float = 0., class_weights: torch.Tensor = None, save_path=None,
-          augmentation_applier: AugmentationApplier = None, device: str = 'cpu'):
+def _accuracy(prediction, target):
+    return (prediction.argmax(axis=1) == target).float().mean()
+
+
+def train(n_epochs: int, model: Net, data_train: DataLoader, data_val: DataLoader, lr: float = 1e-2,
+          weight_decay: float = 0., class_weights: torch.Tensor = None, save_path=None, device='cpu'):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr,weight_decay=weight_decay)
     loss_function = torch.nn.CrossEntropyLoss(weight=class_weights)
     best_acc = 0
-    y_train, y_val = torch.LongTensor(y_train).to(device), torch.LongTensor(y_val).to(device)
-    x_val = torch.FloatTensor(x_val).to(device)
-    x_val = x_val.permute(0, 3, 1, 2)
     for epoch in range(n_epochs):
-        x_train_final = x_train
-        if augmentation_applier:
-            x_train_final = augmentation_applier.apply_batch(x_train)
-        x_train_final = torch.FloatTensor(x_train_final).to(device)
-        x_train_final = x_train_final.permute(0, 3, 1, 2)
+        losses_train = []
+        for x_batch, y_batch in data_train:
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            prediction = model(x_batch)
+            loss = loss_function(prediction, y_batch)
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+            losses_train.append(loss.detach().cpu().numpy())
 
-        prediction = model(x_train_final)
-        loss = loss_function(prediction, y_train)
-
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-
-        model.drop = False
-        val_prediction = model(x_val).detach()
-        model.drop = True
-        val_loss = loss_function(val_prediction, y_val)
-        acc = (val_prediction.argmax(axis=1) == y_val).float().mean()
-        print(f'loss: {loss:.4f}/{val_loss:.4f}, accuracy: {acc}')
-        if acc > best_acc and save_path is not None:
+        predictions_val = []
+        targets_val = []
+        losses_val = []
+        for x_batch, y_batch in data_val:
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            prediction = model(x_batch)
+            loss = loss_function(prediction, y_batch)
+            predictions_val.append(prediction.detach())
+            targets_val.append(y_batch)
+            losses_val.append(loss.detach().cpu().numpy())
+        predictions_val = torch.cat(predictions_val)
+        targets_val = torch.cat(targets_val)
+        accuracy = _accuracy(predictions_val, targets_val)
+        print(f'loss: {np.mean(losses_train):.4f}/{np.mean(losses_val):.4f}, accuracy: {accuracy}')
+        if accuracy > best_acc and save_path is not None:
+            best_acc = accuracy
             torch.save(model.state_dict(), save_path)

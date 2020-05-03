@@ -3,8 +3,10 @@ from pathlib import Path
 
 import numpy as np
 import cv2
+from torch.utils.data import Dataset
 
 from ball_detection.candidate_classifier.model import NET_INPUT_SIZE
+from ball_detection.candidate_classifier.augmentations import AugmentationApplier
 
 
 DIR_FALSE_POSITIVE = 'not_balls'
@@ -49,7 +51,7 @@ def read_data(data_dir, markup_filename='markup.json'):
         boxes.append(cur_image_boxes)
         labels.extend([get_region_label(region) for region in image_regions])
     boxes = np.concatenate(boxes)
-    labels = np.array(labels)
+    labels = np.int64(labels)
 
     return boxes, labels
 
@@ -66,10 +68,30 @@ def read_dataset_folder(data_dir=Path('data/sync/dataset_solid_striped_sep')):
     striped_balls = read_dir(data_dir / DIR_STRIPED_BALLS)
 
     pictures = np.concatenate((false_positives, solid_balls, striped_balls))
-    labels = np.array(
+    labels = np.int64(
         [LABEL_FALSE_POSITIVE] * len(false_positives) +
         [LABEL_INTEGRAL_BALL] * len(solid_balls) +
         [LABEL_STRIPED_BALL] * len(striped_balls)
     )
 
     return pictures, labels
+
+
+class CandidateDataset(Dataset):
+    def __init__(self, candidates: np.array, labels: np.array, augmentation_applier: AugmentationApplier = None,
+                 device='cpu'):
+        self.candidates = candidates
+        self.labels = labels
+        self.augmentation_applier = augmentation_applier
+        self.device = device
+
+    def __len__(self):
+        return len(self.candidates)
+
+    def __getitem__(self, item):
+        image = self.candidates[item]
+        label = self.labels[item]
+        if self.augmentation_applier:
+            image = self.augmentation_applier.apply(image)
+        image = image.transpose((2, 0, 1))
+        return image, label

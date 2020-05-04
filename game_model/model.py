@@ -23,14 +23,21 @@ class BallType(Enum):
     MAROON_STRIPED = 15
     WHITE = 16
 
+    GENERAL_SOLID = 17
+    GENERAL_STRIPED = 18
+
+    @staticmethod
+    def _no_label():
+        return [BallType.WHITE, BallType.GENERAL_SOLID, BallType.GENERAL_STRIPED]
+
     def is_striped(self):
-        return 9 <= self.value <= 15
+        return 9 <= self.value <= 15 or self == BallType.GENERAL_STRIPED
 
     def is_solid(self):
-        return 1 <= self.value <= 7
+        return 1 <= self.value <= 7 or self == BallType.GENERAL_SOLID
 
     def label(self) -> str:
-        return str(self.value) if self != BallType.WHITE else ""
+        return str(self.value) if self not in BallType._no_label() else ""
 
 
 class Colors:
@@ -38,6 +45,9 @@ class Colors:
     white = [255, 255, 255]
     black = [0, 0, 0]
     brown = [20, 70, 140]
+
+    general_striped = [0, 150, 255]
+    general_solid = [0, 0, 255]
 
     __ball_colors = [black,
               [0, 255, 255],  # yellow
@@ -51,8 +61,14 @@ class Colors:
 
     @staticmethod
     def main_ball_color(ball_type: BallType):
-        return Colors.__ball_colors[ball_type.value % 8] \
-            if ball_type != BallType.WHITE else Colors.__ball_colors[-1]
+        if ball_type == BallType.WHITE:
+            return Colors.white
+        if ball_type == BallType.GENERAL_STRIPED:
+            return Colors.general_striped
+        if ball_type == BallType.GENERAL_SOLID:
+            return Colors.general_solid
+
+        return Colors.__ball_colors[ball_type.value % 8]
 
 
 DEFAULT_BOARD_SIZE = (990, 1980)  # mm, 7 foot table

@@ -47,6 +47,7 @@ class Application:
         self.root.bind('q', self.close_button_clicked)
         self.root.bind('d', self.next_button_clicked)
         self.root.bind('r', self.flip_pocket_flag)
+        self.root.bind('s', self.next_image)
 
         # configure draw area
         self.canvas = Canvas(self.root, bg='white')
@@ -149,6 +150,9 @@ class Application:
                                + [rel_flag]])
         self.df = self.df.append(record, ignore_index=True)
         self.df.to_csv(self.layout_path, index=False, header=None)
+        self.next_image()
+
+    def next_image(self, event=None):
         self.current_image_ptr += 1
         if self.current_image_ptr == len(self.images_paths):
             self.root.quit()

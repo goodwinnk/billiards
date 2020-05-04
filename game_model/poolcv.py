@@ -17,10 +17,10 @@ class VideoEvent:
     class EventType(Enum):
         GAME_STARTED = 1  # TODO: Detect original position
         GAME_ENDED = 2  # TODO: Detect game has ended
-        SHOT_STARTED = 3 # TODO
-        SHOT_ENDED = 4 # TODO
-        BALL_IN_THE_POCKET = 3 # TODO
-        CAMERA_CHANGED = 4 # TODO
+        SHOT_STARTED = 3  # TODO
+        SHOT_ENDED = 4  # TODO
+        BALL_IN_THE_POCKET = 3  # TODO
+        CAMERA_CHANGED = 4  # TODO
         CAMERA_STABLE = 5
 
     def __init__(self, event_type: EventType, frame_index: int):

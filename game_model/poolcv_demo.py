@@ -1,4 +1,4 @@
-from cv2.cv2 import imshow, destroyWindow, imwrite, namedWindow, WINDOW_AUTOSIZE
+from cv2 import imshow, destroyWindow, namedWindow, WINDOW_AUTOSIZE
 
 from data_utils.utils import frame_by_frame_play
 from game_model.poolcv import PoolCV

@@ -74,10 +74,10 @@ if __name__ == '__main__':
             os.makedirs(directory)
 
 
-    images_dir = os.getcwd() + '/../data/sync/images_for_dataset'
+    images_dir = os.getcwd() + '/../../data/sync/images_for_dataset'
 
     tm = datetime.datetime.now().strftime("%H:%M:%S_%Y-%m-%d")
-    dataset_dir = '../data/sync/dataset_' + tm
+    dataset_dir = '../../data/sync/dataset_' + tm
     solid_balls_dir = dataset_dir + '/solid_balls'
     striped_balls_dir = dataset_dir + '/striped_balls'
     not_balls_dir = dataset_dir + '/not_balls'

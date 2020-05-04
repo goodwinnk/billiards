@@ -29,8 +29,10 @@ class Application:
         self.layout_path = layout_path
         self.layout_dir_path = os.path.dirname(layout_path)
         self.file = open(layout_path, 'a')
-        self.images_paths = set(os.path.relpath(os.path.join(dir_path, f), self.layout_dir_path)
-                                for f in os.listdir(dir_path) if is_image_format(f))
+        self.images_paths = set(os.path.relpath(os.path.join(r, f), self.layout_dir_path)
+                                for r, d, fs in os.walk(dir_path)
+                                for f in fs
+                                if is_image_format(f))
         try:
             self.df = pd.read_csv(self.layout_path, header=None)
         except pd.errors.EmptyDataError:
@@ -103,7 +105,7 @@ class Application:
         self.img = ImageTk.PhotoImage(Image.fromarray(np_img[:, :, ::-1]))
 
         h, w = np_img.shape[: 2]
-        self.d = int(0.25 * max(h, w))
+        self.d = min(150, int(0.25 * max(h, w)))
 
         self.canvas.create_image(self.d, self.d, image=self.img, anchor=NW)
         self.set_window_size(2 * self.d + w, 2 * self.d + h)

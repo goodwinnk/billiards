@@ -18,9 +18,9 @@ if __name__ == '__main__':
         data = json.loads(text)
 
     table_corners = data['table']
-    balls = {}
+    balls = []
     for key, val in data["balls"].items():
-        balls[BallType[key.upper()]] = make_point(val)
+        balls.append((BallType[key.upper()], make_point(val)))
 
     # sample image
     sample_input = cv2.imread('../data/sync/game_model_demo/image.jpg').copy()

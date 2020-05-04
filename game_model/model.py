@@ -1,14 +1,11 @@
 import sympy.geometry as geom
-from typing import Dict, List
+from typing import List, Tuple
 from enum import Enum
 import cv2
 import numpy as np
 
 
 class BallType(Enum):
-    """
-    The billiard balls colors enum.
-    """
     YELLOW_SOLID = 1
     BLUE_SOLID = 2
     RED_SOLID = 3
@@ -102,15 +99,15 @@ class Board:
             self.X1 = geom.intersection(geom.Line2D(self.D, self.A), self.line)[0]
             self.x_len = self.X1.distance(self.B)
 
-    def add_balls(self, added_balls: Dict[BallType, geom.Point2D]):
+    def add_balls(self, added_balls: List[Tuple[BallType, geom.Point2D]]):
         """
         Adds the given billiard balls coordinates to the table model.
-        :param added_balls: the ball color (see class BallColor) with ball coordinate point on the image
+        :param added_balls: the ball type (see class BallType) with ball coordinate point on the image
           (which was used for table coordinates in the constructor).
         """
-        for color, p in added_balls.items():
+        for ball_type, p in added_balls:
             x, y = self.get_rectangular_coordinates(p)
-            self.balls.append((color, (x, y)))
+            self.balls.append((ball_type, (x, y)))
 
     def clear_balls(self):
         """
@@ -191,22 +188,22 @@ if __name__ == '__main__':
     # nevertheless, it is possible for them to form any convex quadrangle.
     table = [geom.Point(0, 0), geom.Point(10, 0), geom.Point(10, 10), geom.Point(0, 10)]
 
-    balls = {BallType.YELLOW_SOLID: geom.Point(5, 5),
-             BallType.BLUE_SOLID: geom.Point(1, 1),
-             BallType.RED_SOLID: geom.Point(7, 2),
-             BallType.PURPLE_SOLID: geom.Point(2, 7),
-             BallType.ORANGE_SOLID: geom.Point(7, 7),
-             BallType.GREEN_SOLID: geom.Point(4, 5),
-             BallType.MAROON_SOLID: geom.Point(5, 3),
-             BallType.BLACK: geom.Point(9, 6),
-             BallType.YELLOW_STRIPED: geom.Point(2, 8),
-             BallType.BLUE_STRIPED: geom.Point(2, 4),
-             BallType.RED_STRIPED: geom.Point(9, 9),
-             BallType.PURPLE_STRIPED: geom.Point(3, 6),
-             BallType.ORANGE_STRIPED: geom.Point(6, 3),
-             BallType.GREEN_STRIPED: geom.Point(6, 8),
-             BallType.MAROON_STRIPED: geom.Point(3, 4),
-             BallType.WHITE: geom.Point(5, 9)}
+    balls = [(BallType.YELLOW_SOLID, geom.Point(5, 5)),
+             (BallType.BLUE_SOLID, geom.Point(1, 1)),
+             (BallType.RED_SOLID, geom.Point(7, 2)),
+             (BallType.PURPLE_SOLID, geom.Point(2, 7)),
+             (BallType.ORANGE_SOLID, geom.Point(7, 7)),
+             (BallType.GREEN_SOLID, geom.Point(4, 5)),
+             (BallType.MAROON_SOLID, geom.Point(5, 3)),
+             (BallType.BLACK, geom.Point(9, 6)),
+             (BallType.YELLOW_STRIPED, geom.Point(2, 8)),
+             (BallType.BLUE_STRIPED, geom.Point(2, 4)),
+             (BallType.RED_STRIPED, geom.Point(9, 9)),
+             (BallType.PURPLE_STRIPED, geom.Point(3, 6)),
+             (BallType.ORANGE_STRIPED, geom.Point(6, 3)),
+             (BallType.GREEN_STRIPED, geom.Point(6, 8)),
+             (BallType.MAROON_STRIPED, geom.Point(3, 4)),
+             (BallType.WHITE, geom.Point(5, 9))]
 
     board = Board(table)
     board.add_balls(balls)

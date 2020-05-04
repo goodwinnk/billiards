@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 from data_utils.utils import frame_by_frame_play
-from ball_detection import BallDetector, visualize_balls
+from ball_detection import BallDetector, visualize_balls, get_unique_balls
 from ball_detection.candidate_generation_hough import HoughCircleDetector
 from ball_detection.candidate_generation_motion import MotionDetector
 
@@ -26,6 +26,7 @@ detector = BallDetector(candidate_generators, net_path=WEIGHTS_PATH)
 
 def highlight_balls(image, _):
     balls = detector.get_balls(image)
+    balls = get_unique_balls(balls)
     return visualize_balls(image, balls)
 
 

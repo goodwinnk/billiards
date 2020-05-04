@@ -132,12 +132,10 @@ def read_dataset_folder_padding(data_dir=Path('data/sync/dataset_solid_striped_s
 
 
 class CandidateDataset(Dataset):
-    def __init__(self, candidates: np.array, labels: np.array, augmentation_applier: AugmentationApplier = None,
-                 device='cpu'):
+    def __init__(self, candidates: np.array, labels: np.array, augmentation_applier: AugmentationApplier = None):
         self.candidates = candidates
         self.labels = labels
         self.augmentation_applier = augmentation_applier
-        self.device = device
 
     def __len__(self):
         return len(self.candidates)

@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 from torch.utils.data import Dataset
 
+from ball_detection.utils import BallType
 from ball_detection.candidate_classifier.model import NET_INPUT_SIZE
 from ball_detection.candidate_classifier.augmentations import AugmentationApplier
 
@@ -12,9 +13,8 @@ from ball_detection.candidate_classifier.augmentations import AugmentationApplie
 DIR_FALSE_POSITIVE = 'not_balls'
 DIR_INTEGRAL_BALLS = 'solid_balls'
 DIR_STRIPED_BALLS = 'striped_balls'
-LABEL_FALSE_POSITIVE = 0
-LABEL_INTEGRAL_BALL = 1
-LABEL_STRIPED_BALL = 2
+DIR_WHITE_BALLS = 'white_balls'
+DIR_BLACK_BALLS = 'black_balls'
 
 
 def cut_boxes(image, regions):
@@ -28,13 +28,13 @@ def cut_boxes(image, regions):
     return boxes
 
 
-def get_region_label(region):
-    if region['region_type'] == 'false_detection':
-        return LABEL_FALSE_POSITIVE
-    elif region['region_type'] == 'striped':
-        return LABEL_STRIPED_BALL
-    else:
-        return LABEL_INTEGRAL_BALL
+LABELS_BALL_TYPES = {
+    'false_detection': BallType.FALSE,
+    'striped': BallType.STRIPED,
+    'integral': BallType.INTEGRAL,
+    'white': BallType.WHITE,
+    'black': BallType.BLACK
+}
 
 
 def read_data(data_dir, markup_filename='markup.json'):
@@ -49,7 +49,7 @@ def read_data(data_dir, markup_filename='markup.json'):
         image = cv2.imread(str(data_dir / image_path))
         cur_image_boxes = cut_boxes(image, (region['box'] for region in image_regions))
         boxes.append(cur_image_boxes)
-        labels.extend([get_region_label(region) for region in image_regions])
+        labels.extend([LABELS_BALL_TYPES[region['region_type']].value for region in image_regions])
     boxes = np.concatenate(boxes)
     labels = np.int64(labels)
 
@@ -66,12 +66,16 @@ def read_dataset_folder(data_dir=Path('data/sync/dataset_solid_striped_sep')):
     false_positives = read_dir(data_dir / DIR_FALSE_POSITIVE)
     solid_balls = read_dir(data_dir / DIR_INTEGRAL_BALLS)
     striped_balls = read_dir(data_dir / DIR_STRIPED_BALLS)
+    white_balls = read_dir(data_dir / DIR_WHITE_BALLS)
+    black_balls = read_dir(data_dir / DIR_BLACK_BALLS)
 
-    pictures = np.concatenate((false_positives, solid_balls, striped_balls))
+    pictures = np.concatenate((false_positives, solid_balls, striped_balls, white_balls, black_balls))
     labels = np.int64(
-        [LABEL_FALSE_POSITIVE] * len(false_positives) +
-        [LABEL_INTEGRAL_BALL] * len(solid_balls) +
-        [LABEL_STRIPED_BALL] * len(striped_balls)
+        [BallType.FALSE.value] * len(false_positives) +
+        [BallType.INTEGRAL.value] * len(solid_balls) +
+        [BallType.STRIPED.value] * len(striped_balls) +
+        [BallType.WHITE.value] * len(white_balls) +
+        [BallType.BLACK.value] * len(black_balls)
     )
 
     return pictures, labels

@@ -1,4 +1,3 @@
-from enum import Enum
 from itertools import chain
 
 import torch
@@ -6,16 +5,13 @@ import cv2
 
 from ball_detection.candidate_classifier.model import Net
 from ball_detection.candidate_classifier.data_preprocessing import cut_boxes
-
-
-class BallType(Enum):
-    INTEGRAL = 1
-    STRIPED = 2
-
+from ball_detection.utils import BallType
 
 VIS_COLORS = {
     BallType.INTEGRAL: (0, 255, 0),
-    BallType.STRIPED: (255, 0, 0)
+    BallType.STRIPED: (255, 0, 0),
+    BallType.WHITE: (255, 255, 255),
+    BallType.BLACK: (0, 0, 0)
 }
 
 

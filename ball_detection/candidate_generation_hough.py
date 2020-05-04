@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 
+from ball_detection.commons import _CANDIDATE_PADDING_COEFFICIENT
+
 
 def visualize_circles(image, circles):
     visualization = image.copy()
@@ -26,7 +28,7 @@ class HoughCircleDetector:
         regions = []
         m, n = image.shape[:2]
         for x, y, r in self.get_hough_circles(image):
-            half_side = min(r * 1.5, n - x, x, m - y, y)
+            half_side = min(r * _CANDIDATE_PADDING_COEFFICIENT, n - x, x, m - y, y)
             center = x, y
             borders = int(x - half_side), int(x + half_side + 1), int(y - half_side), int(y + half_side + 1)
             regions.append((center, borders, r) if return_radius else (center, borders))

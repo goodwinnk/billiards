@@ -7,3 +7,6 @@ class BallType(Enum):
     STRIPED = 2
     WHITE = 3
     BLACK = 4
+
+
+_CANDIDATE_PADDING_COEFFICIENT = 1.5

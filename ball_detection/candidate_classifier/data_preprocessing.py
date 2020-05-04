@@ -1,13 +1,18 @@
 import json
 from pathlib import Path
+from collections import defaultdict
+from itertools import chain
+from functools import reduce
+from operator import or_
 
 import numpy as np
 import cv2
 from torch.utils.data import Dataset
 
-from ball_detection.utils import BallType
+from ball_detection.commons import BallType
 from ball_detection.candidate_classifier.model import NET_INPUT_SIZE
 from ball_detection.candidate_classifier.augmentations import AugmentationApplier
+from ball_detection.commons import _CANDIDATE_PADDING_COEFFICIENT
 
 
 DIR_FALSE_POSITIVE = 'not_balls'
@@ -57,7 +62,7 @@ def read_data(data_dir, markup_filename='markup.json'):
 
 
 def read_dir(dir_path):
-    images = [cv2.imread(str(file_dir)) for file_dir in dir_path.glob('*')]
+    images = [cv2.imread(str(file_dir)) for file_dir in dir_path.glob('*.jpg')]
     images = list(filter(lambda x: x is not None, images))
     return np.float32(images) / 255
 
@@ -79,6 +84,51 @@ def read_dataset_folder(data_dir=Path('data/sync/dataset_solid_striped_sep')):
     )
 
     return pictures, labels
+
+
+def read_dir_coordinates(dir_path, label):
+    image_candidates = defaultdict(list)
+    for coordinates_file_path in dir_path.glob('*.txt'):
+        _, image_id = coordinates_file_path.stem.split('_')
+        cx, cy, r = map(int, coordinates_file_path.read_text().split())
+        image_candidates[image_id].append((cx, cy, r, label))
+    return image_candidates
+
+
+def merge_dicts(dicts):
+    image_names = reduce(or_, (d.keys() for d in dicts))
+    return {
+        image_name: list(chain(*(d[image_name] for d in dicts)))
+        for image_name in image_names
+    }
+
+
+def read_dataset_folder_padding(data_dir=Path('data/sync/dataset_solid_striped_sep'),
+                                images_dir=Path('data/sync/images_for_dataset')):
+    image_candidate_regions = merge_dicts((
+        read_dir_coordinates(data_dir / DIR_FALSE_POSITIVE, BallType.FALSE),
+        read_dir_coordinates(data_dir / DIR_INTEGRAL_BALLS, BallType.INTEGRAL),
+        read_dir_coordinates(data_dir / DIR_STRIPED_BALLS, BallType.STRIPED),
+        read_dir_coordinates(data_dir / DIR_WHITE_BALLS, BallType.WHITE),
+        read_dir_coordinates(data_dir / DIR_BLACK_BALLS, BallType.BLACK)
+    ))
+
+    boxes = []
+    labels = []
+    for image_name, candidate_regions in image_candidate_regions.items():
+        image_path = (images_dir / image_name).with_suffix('.png')
+        image = cv2.imread(str(image_path))
+        box_borders = []
+        m, n = image.shape[:2]
+        for (cx, cy, r, _) in candidate_regions:
+            half_side = min(int(r * _CANDIDATE_PADDING_COEFFICIENT), cx, cy, n - cx, m - cy)
+            box_borders.append((int(cx - half_side), int(cx + half_side), int(cy - half_side), int(cy + half_side)))
+        boxes.append(cut_boxes(image, box_borders))
+        labels.extend(label.value for _, _, _, label in candidate_regions)
+    boxes = np.concatenate(boxes)
+    labels = np.int64(labels)
+
+    return boxes, labels
 
 
 class CandidateDataset(Dataset):

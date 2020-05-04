@@ -5,7 +5,7 @@ import cv2
 
 from ball_detection.candidate_classifier.model import Net
 from ball_detection.candidate_classifier.data_preprocessing import cut_boxes
-from ball_detection.utils import BallType
+from ball_detection.commons import BallType
 
 VIS_COLORS = {
     BallType.INTEGRAL: (0, 255, 0),

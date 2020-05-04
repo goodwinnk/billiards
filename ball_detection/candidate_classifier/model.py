@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ball_detection.utils import BallType
+from ball_detection.commons import BallType
 
 
 NET_INPUT_SIZE = 32, 32

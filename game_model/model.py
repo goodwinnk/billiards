@@ -55,6 +55,9 @@ class Colors:
             if ball_type != BallType.WHITE else Colors.__ball_colors[-1]
 
 
+DEFAULT_BOARD_SIZE = (990, 1980)  # mm, 7 foot table
+BALL_SIZE = 57  # mm, american pool
+
 class Board:
     """
     A class to store the billiard table model by the table and balls coordinates on the image.
@@ -62,8 +65,7 @@ class Board:
     add_balls method to add the coordinates of the billiard balls,
     clear method to delete all added balls in the model.
     """
-
-    def __init__(self, init_table: List[geom.Point2D], x=750, y=1000):
+    def __init__(self, init_table: List[geom.Point2D], x=int(DEFAULT_BOARD_SIZE[0] / 2), y=int(DEFAULT_BOARD_SIZE[1] / 2)):
         """
         Initialize the class with 4 billiard table corners.
         :param init_table: 4 corner coordinates of the table on the image.
@@ -149,16 +151,19 @@ class Board:
         Returns the model representation of the current Board state.
         :return: image (np.array) of shape (X, Y) with all the added balls.
         """
-        image = np.float32([[Colors.table_color for _ in range(self.img_sz[0])] for _ in range(self.img_sz[1])])
+        image = np.uint8([[Colors.table_color for _ in range(self.img_sz[0])] for _ in range(self.img_sz[1])])
 
-        r = 20  # ball radius
+        ratio = self.img_sz[0] / DEFAULT_BOARD_SIZE[0]
+        ball_radius = int(20 * ratio)
+        stripe_size = max(1, ball_radius // 4)
+
         for x in [0, self.img_sz[0]]:
             for y in [0, self.img_sz[1] // 2, self.img_sz[1]]:
-                cv2.circle(image, (x, y), 2 * r, Colors.brown, thickness=-1)
+                cv2.circle(image, (x, y), 2 * ball_radius, Colors.brown, thickness=-1)
 
         font = cv2.FONT_HERSHEY_PLAIN
         font_scale = 1.0
-        thickness = 2
+        thickness = max(1, int(2 * ratio))
 
         def get_text_start_point(center_point, text):
             center_point_x, center_point_y = center_point
@@ -171,11 +176,11 @@ class Board:
             ball_color = Colors.main_ball_color(ball)
             new_pos = (pos[0], pos[1])
             if ball.is_striped():
-                cv2.circle(image, new_pos, r, Colors.white, thickness=-1)
-                cv2.circle(image, new_pos, r - 4, ball_color, thickness=-1)
+                cv2.circle(image, new_pos, ball_radius, Colors.white, thickness=-1)
+                cv2.circle(image, new_pos, ball_radius - stripe_size, ball_color, thickness=-1)
             else:
-                cv2.circle(image, new_pos, r, ball_color, thickness=-1)
-            cv2.circle(image, new_pos, r // 2, Colors.white, thickness=-1)
+                cv2.circle(image, new_pos, ball_radius, ball_color, thickness=-1)
+            cv2.circle(image, new_pos, ball_radius // 2, Colors.white, thickness=-1)
             label = ball.label()
             cv2.putText(image, label, get_text_start_point(new_pos, label),
                         font, thickness=thickness, color=Colors.black, fontScale=font_scale)

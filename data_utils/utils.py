@@ -7,6 +7,35 @@ import dateparser
 import numpy as np
 from pytube import YouTube
 
+from youtube_dl import YoutubeDL
+
+import subprocess
+
+
+# Downloads all videos from youtube channel, takes n_frames uniform frames from each video and saves them into
+# structured directories (channel_id/video_id/*.png)
+def download_frame_from_yotube_video(channel_url, n_frames, output_path):
+    with YoutubeDL({'format': 'mp4'}) as ydl:
+        info_dict = ydl.extract_info(channel_url, download=False)
+        channel_id = info_dict.get('id')
+        for video in info_dict.get('entries'):
+            video_id = video.get('id')
+            video_duration = video.get('duration')
+            video_url = video.get('url')
+            dir_path = os.path.join(output_path, f'channel_{channel_id}', f'video_{video_id}')
+            os.makedirs(dir_path, exist_ok=True)
+            for i in range(n_frames):
+                file_path = os.path.join(dir_path, f'{1 + len(os.listdir(dir_path))}.png')
+                timestamp = int((i + 1) * video_duration / (n_frames + 1))
+                subprocess.run([
+                    'ffmpeg', '-hide_banner', '-loglevel', 'panic',
+                    '-ss', str(timestamp),
+                    '-i', video_url,
+                    '-vframes', '1',
+                    '-q:v', '2',
+                    file_path
+                ])
+
 
 # Download youtube video
 def download_youtube_video(url, output_path: Optional[str] = None):

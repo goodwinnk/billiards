@@ -127,7 +127,6 @@ class Application:
     def get_up_half_left_point(self):
         ids = list(range(len(self.polygon_vertices)))
         ids.sort(key=lambda i: tuple(self.polygon_vertices[i]))
-        print(self.polygon_vertices[ids])
         if self.polygon_vertices[ids[0]][0] < self.polygon_vertices[ids[1]][0]:
             return ids[0]
         else:
@@ -145,14 +144,11 @@ class Application:
 
     def next_button_clicked(self, event=None):
         rel_hull, rel_flag = self.get_relative_hull_with_pocket_flag()
-        print(type(rel_hull), type(rel_flag))
         record = pd.DataFrame([[self.images_paths[self.current_image_ptr]]
                                + rel_hull.reshape(-1).tolist()
                                + [rel_flag]])
-        print(record)
         self.df = self.df.append(record, ignore_index=True)
         self.df.to_csv(self.layout_path, index=False, header=None)
-        print(self.df)
         self.current_image_ptr += 1
         if self.current_image_ptr == len(self.images_paths):
             self.root.quit()

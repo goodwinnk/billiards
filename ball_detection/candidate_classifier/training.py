@@ -10,8 +10,11 @@ def _accuracy(prediction, target):
 
 
 def train(n_epochs: int, model: Net, data_train: DataLoader, data_val: DataLoader, lr: float = 1e-2,
-          weight_decay: float = 0., class_weights: torch.Tensor = None, save_path=None, device='cpu'):
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr,weight_decay=weight_decay)
+          weight_decay: float = 0., class_weights: torch.Tensor = None, save_path=None, device='cpu',
+          optimizer: torch.optim.Optimizer = None):
+    if not optimizer:
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr,weight_decay=weight_decay)
+    #     If optimizer is provided, the passed learning rate value is ignored
     loss_function = torch.nn.CrossEntropyLoss(weight=class_weights)
     best_acc = 0
     for epoch in range(n_epochs):

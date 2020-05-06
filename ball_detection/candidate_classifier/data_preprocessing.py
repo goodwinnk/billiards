@@ -106,7 +106,7 @@ def split_balls_false_detections(dataset_index: dict):
 
 
 class CandidatesDataset(IterableDataset):
-    def __init__(self, index: dict, move_prob: float = 0.):
+    def __init__(self, index: dict, move_prob: float = 0., shuffle=False):
         super(CandidatesDataset, self).__init__()
         self.data = []
         for image_path, regions in index.items():
@@ -117,9 +117,10 @@ class CandidatesDataset(IterableDataset):
             self.data.append((image_path, image_cut_candidates))
         self.move_prob = move_prob
         self.n = sum(map(len, index.values()))
+        self.shuffle = shuffle
 
     def __iter__(self):
-        data = random.sample(self.data, len(self.data))
+        data = random.sample(self.data, len(self.data)) if self.shuffle else self.data
         for image_path, image_candidates in data:
             if self.move_prob and np.random.binomial(1, self.move_prob):
                 image = cv2.imread(image_path)

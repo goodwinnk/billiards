@@ -4,22 +4,20 @@ import cv2
 from data_utils.utils import frame_by_frame_play
 from ball_detection import BallDetector, visualize_balls, get_unique_balls
 from ball_detection.candidate_generation_hough import HoughCircleDetector
-from ball_detection.candidate_generation_motion import MotionDetector
+from ball_detection.candidate_generation_motion import MotionDetector, get_background
+from table_recognition.find_table_polygon import calc_mask, read_frames
+
 
 # Project directory root should be used as working directory
 
-# WEIGHTS_PATH = 'ball_detection/candidate_classifier/weights.pt'
-WEIGHTS_PATH = 'notebooks/best_model.pt'
-DATA_DIR = 'data/sync/resources/012'
-VIDEO_PATH = DATA_DIR + '/video012.mp4'
-# DATA_DIR = '../data/'
-# VIDEO_PATH = DATA_DIR + '20200120_115235_hd.mp4'
-TABLE_MASK_PATH = DATA_DIR + '/table_mask.png'
-BACKGROUND_PATH = DATA_DIR + '/background.png'
+WEIGHTS_PATH = 'ball_detection/candidate_classifier/weights.pt'
+VIDEO_PATH = 'data/sync/poolcv_demo/20200120_115235-resized.m4v'
+FRAMES_FOR_MASK = 20
+FRAMES_FOR_BACKGROUND = 10
 
-
-table_mask = cv2.imread(TABLE_MASK_PATH)[:, :, 0]
-background = cv2.imread(BACKGROUND_PATH)
+video = cv2.VideoCapture(VIDEO_PATH)
+table_mask = calc_mask(video, FRAMES_FOR_MASK).astype(np.uint8)
+background = get_background(table_mask.astype(np.bool), read_frames(video, FRAMES_FOR_BACKGROUND))
 candidate_generators = [
     HoughCircleDetector(table_mask),
     MotionDetector(table_mask.astype(np.bool), background)

@@ -304,9 +304,9 @@ def get_table_hulls(frames: Iterable[np.array], resolution: Tuple[int]):
 
 # Reads FRAMES_TO_DETECT_TABLE from the provided video capture
 # Changes the CAP_PROP_POS_FRAMES position in the video capture
-def read_frames(video: cv2.VideoCapture):
+def read_frames(video: cv2.VideoCapture, n_frames: int):
     frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    step = int(frame_count / FRAMES_TO_DETECT_TABLE)
+    step = int(frame_count / n_frames)
     for frame_number in range(0, frame_count, step):
         video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
         response, frame = video.read()
@@ -316,9 +316,9 @@ def read_frames(video: cv2.VideoCapture):
 # Calculates FRAMES_TO_DETECT_TABLE table hulls for the provided video and averages the good ones.
 # Currently hulls with negative coordinates are discarded.
 # Returns a table mask
-def calc_mask(video: cv2.VideoCapture):
+def calc_mask(video: cv2.VideoCapture, n_frames: int = FRAMES_TO_DETECT_TABLE):
     resolution = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    hulls = get_table_hulls(read_frames(video), resolution)
+    hulls = get_table_hulls(read_frames(video, n_frames), resolution)
     relevant_hulls = hulls.all(axis=(1, 2))
     mean_hull = hulls[relevant_hulls].mean(axis=0).astype(np.int32)
     return find_convex_hull_mask(resolution, mean_hull)

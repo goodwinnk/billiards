@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from ball_detection import BallType, BallRegion
+from ball_detection.commons import BallType, BallRegion
 
 
 VIS_COLORS = {

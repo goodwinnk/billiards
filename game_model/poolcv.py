@@ -5,9 +5,8 @@ import cv2
 import numpy as np
 from sympy import Point2D
 
-from ball_detection.ball_detector import visualize_balls_on_image, BallDetector, BallType as BallDetectorBallType
-from ball_detection.candidate_generation_hough import HoughCircleDetector
-from ball_detection.candidate_generation_motion import MotionDetector
+from ball_detection import visualize_balls_on_image, BallDetector, BallType as BallDetectorBallType
+from ball_detection import HoughCircleDetector, MotionDetector, BallRegion
 from game_model.model import Board, BallType
 from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
@@ -34,11 +33,7 @@ class PoolCV:
         self.ball_detector: Optional[BallDetector] = None
 
         # TODO: Create type for ball result with correspondent accessors
-        self.balls: List[Tuple[
-            Tuple[float, float],  # center
-            Tuple[int, int, int, int],  # region
-            BallDetectorBallType
-        ]] = []
+        self.balls: List[BallRegion] = []
 
         self.table_layout: Optional[np.ndarray] = None
 
@@ -100,7 +95,8 @@ class PoolCV:
     @staticmethod
     def convert_balls(balls) -> List[Tuple[BallType, Point2D]]:
         model_balls = []
-        for center, region, ball_recognition_type in balls:
+        for ball in balls:
+            ball_recognition_type = ball.region_type
             if ball_recognition_type == BallDetectorBallType.INTEGRAL:
                 ball_model_type = BallType.GENERAL_SOLID
             elif ball_recognition_type == BallDetectorBallType.STRIPED:
@@ -114,7 +110,7 @@ class PoolCV:
             else:
                 raise ValueError("Unknown value")
 
-            model_balls.append((ball_model_type, Point2D(int(center[0]), int(center[1]))))
+            model_balls.append((ball_model_type, Point2D(int(ball.center.x), int(ball.center.y))))
 
         return model_balls
 

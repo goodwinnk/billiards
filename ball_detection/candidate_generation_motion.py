@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 
+from ball_detection.commons import Point, Rectangle, BallCandidate, CandidateGenerator
+
 
 MIN_BALL_CONTOUR_LEN = 40
 MAX_BALL_CONTOUR_LEN = 200
@@ -21,7 +23,7 @@ def get_background(table_mask, frames):
     return median_table_img
 
 
-class MotionDetector:
+class MotionDetector(CandidateGenerator):
     def __init__(self, table_mask, background):
         self.table_mask = table_mask
         self.background = background
@@ -46,10 +48,10 @@ class MotionDetector:
         regions = []
         for contour in contours:
             if MIN_BALL_CONTOUR_LEN <= len(contour) <= MAX_BALL_CONTOUR_LEN:
-                cx, cy = center = tuple(map(int, contour.mean(axis=0)[0]))
+                cx, cy = center = Point(*map(int, contour.mean(axis=0)[0]))
                 xs, ys = contour.squeeze().T
                 max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
                 half_side = min(int(max_coord_delta * 1.5), n - cx, cx, m - cy, cy)
-                borders = cx - half_side, cx + half_side + 1, cy - half_side, cy + half_side + 1
-                regions.append((center, borders))
+                box = Rectangle(cx - half_side, cy - half_side, cx + half_side + 1, cy + half_side + 1)
+                regions.append(BallCandidate(center, box))
         return regions

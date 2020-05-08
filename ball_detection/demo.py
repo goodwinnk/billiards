@@ -8,9 +8,12 @@ from ball_detection.candidate_generation_motion import MotionDetector
 
 # Project directory root should be used as working directory
 
-WEIGHTS_PATH = 'ball_detection/candidate_classifier/weights.pt'
-DATA_DIR = 'data/sync/resources/010'
-VIDEO_PATH = DATA_DIR + '/video010.mp4'
+# WEIGHTS_PATH = 'ball_detection/candidate_classifier/weights.pt'
+WEIGHTS_PATH = 'notebooks/best_model.pt'
+DATA_DIR = 'data/sync/resources/012'
+VIDEO_PATH = DATA_DIR + '/video012.mp4'
+# DATA_DIR = '../data/'
+# VIDEO_PATH = DATA_DIR + '20200120_115235_hd.mp4'
 TABLE_MASK_PATH = DATA_DIR + '/table_mask.png'
 BACKGROUND_PATH = DATA_DIR + '/background.png'
 

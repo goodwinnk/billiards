@@ -5,13 +5,13 @@ from torch.utils.data import DataLoader
 from ball_detection.candidate_classifier.model import Net
 
 
-def _accuracy(prediction, target):
+def _accuracy(prediction: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     return (prediction.argmax(axis=1) == target).float().mean()
 
 
 def train(n_epochs: int, model: Net, data_train: DataLoader, data_val: DataLoader, lr: float = 1e-2,
           weight_decay: float = 0., class_weights: torch.Tensor = None, save_path=None, device='cpu',
-          optimizer: torch.optim.Optimizer = None):
+          optimizer: torch.optim.Optimizer = None) -> None:
     if not optimizer:
         optimizer = torch.optim.Adam(model.parameters(), lr=lr,weight_decay=weight_decay)
     #     If optimizer is provided, the passed learning rate value is ignored

@@ -23,7 +23,7 @@ def mark_hole_table_borders_demo(images_path, result_path, model):
             highlight_table_on_frame(demo_img, table)
 
             if find_holes(model, img, table) == 1:
-                np.roll(table, 1, axis=0)
+                table = np.roll(table, 1, axis=0)
 
             for i in range(0, len(table), 2):
                 cv2.line(demo_img, tuple(table[i]), tuple(table[i + 1]), (255, 0, 0), 4)

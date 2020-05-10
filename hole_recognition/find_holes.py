@@ -44,4 +44,4 @@ def find_holes(model, img, table):
         not_hole_prob.append((1 - one_side_hole_probs * k).prod())
     prob0 = not_hole_prob[0] * not_hole_prob[2]
     prob1 = not_hole_prob[1] * not_hole_prob[3]
-    return 1 if prob0 > prob1 else 0
+    return 1 if prob1 > prob0 else 0

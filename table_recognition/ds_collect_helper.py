@@ -107,8 +107,8 @@ class Application:
         h, w = np_img.shape[: 2]
         self.d = min(150, int(0.25 * max(h, w)))
 
-        self.canvas.create_image(self.d, self.d, image=self.img, anchor=NW)
-        self.set_window_size(2 * self.d + w, 2 * self.d + h)
+        self.canvas.create_image(2 * self.d, self.d, image=self.img, anchor=NW)
+        self.set_window_size(4 * self.d + w, 2 * self.d + h)
 
         self.canvas.create_polygon(self.polygon_vertices.reshape(-1).tolist(), fill='', outline='green', width=2.5)
 

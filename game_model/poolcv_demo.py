@@ -4,7 +4,8 @@ from data_utils.utils import frame_by_frame_play
 from game_model.poolcv import PoolCV
 
 if __name__ == '__main__':
-    poolCV = PoolCV(ball_detect_net_path="../ball_detection/candidate_classifier/weights.pt")
+    poolCV = PoolCV(ball_detect_net_path="../ball_detection/candidate_classifier/weights.pt",
+                    hole_detect_net_path="../hole_recognition/weights.pt")
 
     model_window_name = "model"
     namedWindow(model_window_name, flags=WINDOW_AUTOSIZE)

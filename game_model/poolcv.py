@@ -11,6 +11,8 @@ from ball_detection import visualize_balls_on_image, BallDetector, BallType as B
 from game_model.model import Board, BallType
 from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
+from hole_recognition.hole_nn_model import HoleDetector
+from hole_recognition.process_holes import rotate_table
 
 
 class VideoEvent:
@@ -29,12 +31,20 @@ class VideoEvent:
 
 
 class PoolCV:
-    def __init__(self, ball_detect_net_path: str, table_size_mm: Tuple[int, int] = (990, 1980), ball_size_mm: int = 57):
+    def __init__(self, ball_detect_net_path: str,
+                 hole_detect_net_path: str = None,
+                 table_size_mm: Tuple[int, int] = (990, 1980),
+                 ball_size_mm: int = 57):
         self.table_size_mm = table_size_mm
         self.ball_size_mm = ball_size_mm
 
         self.ball_detect_net_path = ball_detect_net_path
         self.ball_detector: Optional[BallDetector] = None
+
+        self.hole_detector: Optional[HoleDetector] = None
+        if hole_detect_net_path is not None:
+            self.hole_detector = HoleDetector()
+            self.hole_detector.load(hole_detect_net_path)
 
         # TODO: Create type for ball result with correspondent accessors
         self.balls: List[BallRegion] = []
@@ -71,7 +81,10 @@ class PoolCV:
             return
 
         self.log.append(VideoEvent(VideoEvent.EventType.CAMERA_STABLE, index))
-        self.table_layout: np.ndarray = PoolCV.orient_table_for_model(un_oriented_table_layout)
+        if self.hole_detector is None:
+            self.table_layout: np.ndarray = PoolCV.orient_table_for_model(un_oriented_table_layout)
+        else:
+            self.table_layout: np.array = rotate_table(self.hole_detector, frame, un_oriented_table_layout)
         self._update_balls_radius(self.table_layout)
 
         self.board = Board(list(map(lambda corner: Point2D(corner), self.table_layout)),

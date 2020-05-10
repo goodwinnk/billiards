@@ -79,5 +79,5 @@ if __name__ == '__main__':
     demo1_result_path = '../data/sync/holes_recognition_demo/table_borders_result'
     demo2_result_path = '../data/sync/holes_recognition_demo/probabilities_result'
     m = prepare_model()
-    mark_hole_table_borders_demo(demo_images_path, demo1_result_path, m)
     mark_hole_probabilies_demo(demo_images_path, demo2_result_path, m)
+    mark_hole_table_borders_demo(demo_images_path, demo1_result_path, m)

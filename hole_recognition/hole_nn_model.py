@@ -30,13 +30,22 @@ def construct_dataset(alpha=0.9):
     data = []
     data_holes_dir = '../data/sync/holes_dataset/holes'
     data_not_holes_dir = '../data/sync/holes_dataset/not_holes'
+
+    def process_file(name, img):
+        ext = name.split('.')[-1]
+        if ext == 'png':
+            return cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        return img
+
     for _, _, files in os.walk(data_holes_dir):
         for file in files:
             img = cv2.imread(data_holes_dir + '/' + file)
+            img = process_file(file, img)
             data.append((img, 1))
     for _, _, files in os.walk(data_not_holes_dir):
         for file in files:
             img = cv2.imread(data_not_holes_dir + '/' + file)
+            img = process_file(file, img)
             data.append((img, 0))
 
     data = np.array(data)
@@ -80,7 +89,7 @@ def show_results(test_img: np.array, test_res: np.array, predictions: np.array):
         f = plt.figure(num=comment)
         for j in range(len(img)):
             f.add_subplot(j // 10 + 1, len(img), j % 10 + 1)
-            plt.imshow(img[i])
+            plt.imshow(cv2.cvtColor(img[j], cv2.COLOR_RGB2BGR))
             plt.axis('off')
 
     plot_images('Holes recognized as not holes:', holes)

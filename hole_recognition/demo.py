@@ -1,4 +1,4 @@
-from hole_recognition.hole_nn_model import prepare_model
+from hole_recognition.hole_nn_model import Model
 from hole_recognition.find_holes import find_holes, split_border
 from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     demo_images_path = '../data/sync/holes_recognition_demo/images'
     demo1_result_path = '../data/sync/holes_recognition_demo/table_borders_result'
     demo2_result_path = '../data/sync/holes_recognition_demo/probabilities_result'
-    m = prepare_model()
+    m = Model()
+    m.load()
     mark_hole_probabilies_demo(demo_images_path, demo2_result_path, m)
     mark_hole_table_borders_demo(demo_images_path, demo1_result_path, m)

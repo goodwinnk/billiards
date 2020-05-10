@@ -16,11 +16,17 @@ class Model:
                            loss='sparse_categorical_crossentropy',
                            metrics=['accuracy'])
 
+    def load(self, path='../data/sync/holes_model_weights/weights.pb'):
+        self.model.load_weights(path)
+
+    def save(self, path='../data/sync/holes_model_weights/weights.pb'):
+        self.model.save_weights(path)
+
     def get_loss(self, test_img: np.array, test_res: np.array):
         return self.model.evaluate(test_img, test_res, verbose=2)
 
     def train(self, train_img: np.array, train_res: np.array):
-        self.model.fit(train_img, train_res, epochs=10)
+        self.model.fit(train_img, train_res, epochs=20)
 
     def predict(self, test_img: np.array):
         return self.model.predict(test_img)
@@ -115,4 +121,5 @@ def prepare_model(show_test_res=False):
 
 
 if __name__ == '__main__':
-    prepare_model(True)
+    model = prepare_model(True)
+    model.save()

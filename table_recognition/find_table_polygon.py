@@ -240,6 +240,9 @@ def find_table_layout_on_frame(frame) -> np.ndarray:
     hull = find_table_polygon(deepcopy(frame))
     hull = remove_big_angles_from_hull(hull)
     hull = take_longest_sides_from_hull(hull, 4)
+    (height, width, _) = frame.shape
+    center = (width / 2, height / 2)
+    hull = sort_hull_vertexes(hull, center)
     return hull
 
 
@@ -279,6 +282,13 @@ def find_table_layout(input_video_path, layout_path):
             layout_file.write('\n')
 
 
+def sort_hull_vertexes(hull: np.array, center: np.array) -> np.array:
+    center_vectors = hull - center
+    angles = np.arctan2(center_vectors[:, 0], center_vectors[:, 1])
+    hull_point_indices = np.argsort(angles)
+    return hull[hull_point_indices]
+
+
 # Calculates hulls for provides frames
 def get_table_hulls(frames: Iterable[np.array], resolution: Tuple[int]):
     center = np.array(resolution)[::-1] // 2
@@ -293,10 +303,7 @@ def get_table_hulls(frames: Iterable[np.array], resolution: Tuple[int]):
         hull = remove_big_angles_from_hull(hull)
         hull = take_longest_sides_from_hull(hull, 4)
 
-        center_vectors = hull - center
-        angles = np.arctan2(center_vectors[:, 0], center_vectors[:, 1])
-        hull_point_indices = np.argsort(angles)
-        hull = hull[hull_point_indices]
+        hull = sort_hull_vertexes(hull, center)
 
         layout.append(hull)
     return np.array(layout, dtype=np.int32)

@@ -10,6 +10,8 @@ from ball_detection import HoughCircleDetector, MotionDetector, BallRegion
 from game_model.model import Board, BallType
 from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
+from hole_recognition.hole_nn_model import HoleDetector
+from hole_recognition.process_holes import rotate_table
 
 
 class VideoEvent:
@@ -28,9 +30,11 @@ class VideoEvent:
 
 
 class PoolCV:
-    def __init__(self, ball_detect_net_path: str):
+    def __init__(self, ball_detect_net_path: str, hole_detect_net_path: str):
         self.ball_detect_net_path = ball_detect_net_path
         self.ball_detector: Optional[BallDetector] = None
+        self.hole_detector: HoleDetector = HoleDetector()
+        self.hole_detector.load(hole_detect_net_path)
 
         # TODO: Create type for ball result with correspondent accessors
         self.balls: List[BallRegion] = []
@@ -50,8 +54,8 @@ class PoolCV:
     def _update_board(self, frame, index):
         self.log.append(VideoEvent(VideoEvent.EventType.CAMERA_STABLE, index))
         self.table_layout: np.ndarray = find_table_layout_on_frame(frame)
+        self.table_layout = rotate_table(self.hole_detector, frame, self.table_layout)
 
-        # TODO: need to have correct order of corners
         self.board = Board(list(map(lambda corner: Point2D(corner), self.table_layout)),
                            x=self.board_size[0], y=self.board_size[1])
 

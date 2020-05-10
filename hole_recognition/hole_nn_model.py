@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 
-class Model:
+class HoleDetector:
     def __init__(self):
         self.model = keras.Sequential([
             keras.layers.Flatten(input_shape=(20, 20, 3)),
@@ -111,7 +111,7 @@ def prepare_model(show_test_res=False):
     """
     alpha = 0.9 if show_test_res else 1
     train_img, train_res, test_img, test_res = construct_dataset(alpha)
-    model = Model()
+    model = HoleDetector()
     model.train(train_img, train_res)
     if show_test_res:
         model.get_loss(test_img, test_res)

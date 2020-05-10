@@ -14,3 +14,4 @@ dateparser
 youtube-dl
 catalyst
 albumentations
+pandas

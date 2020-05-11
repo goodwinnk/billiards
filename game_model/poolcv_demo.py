@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     def frame_modifier(frame, index):
         poolCV.update(frame, index)
-        poolCV.draw_game_on_image(frame)
+        poolCV.draw_game_on_image(frame, draw_net=False)
 
         model_image = poolCV.get_model_image()
         imshow(model_window_name, model_image)

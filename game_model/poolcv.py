@@ -3,10 +3,11 @@ from typing import Optional, List, Tuple
 
 import cv2
 import numpy as np
+from scipy.spatial import distance
 from sympy import Point2D
 
-from ball_detection import visualize_balls_on_image, BallDetector, BallType as BallDetectorBallType
 from ball_detection import HoughCircleDetector, MotionDetector, BallRegion
+from ball_detection import visualize_balls_on_image, BallDetector, BallType as BallDetectorBallType
 from game_model.model import Board, BallType
 from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
@@ -28,7 +29,10 @@ class VideoEvent:
 
 
 class PoolCV:
-    def __init__(self, ball_detect_net_path: str):
+    def __init__(self, ball_detect_net_path: str, table_size_mm: Tuple[int, int] = (990, 1980), ball_size_mm: int = 57):
+        self.table_size_mm = table_size_mm
+        self.ball_size_mm = ball_size_mm
+
         self.ball_detect_net_path = ball_detect_net_path
         self.ball_detector: Optional[BallDetector] = None
 
@@ -36,6 +40,8 @@ class PoolCV:
         self.balls: List[BallRegion] = []
 
         self.table_layout: Optional[np.ndarray] = None
+        self.min_ball_radius_pixels: Optional[int] = None
+        self.max_ball_radius_pixels: Optional[int] = None
 
         self.board_size = (400, 800)
         self.board: Optional[Board] = None
@@ -47,9 +53,19 @@ class PoolCV:
         # TODO: need to understand that board should be updated
         return False
 
+    def _update_balls_radius(self, table_layout):
+        n = len(table_layout)
+        side_lengths = [distance.euclidean(table_layout[i], table_layout[(i + 1) % n]) for i in range(n)]
+        min_side = min(side_lengths)
+        max_side = max(side_lengths)
+
+        self.min_ball_radius_pixels = int(min_side / self.table_size_mm[1] * self.ball_size_mm)
+        self.max_ball_radius_pixels = int(max_side / self.table_size_mm[0] * self.ball_size_mm)
+
     def _update_board(self, frame, index):
         self.log.append(VideoEvent(VideoEvent.EventType.CAMERA_STABLE, index))
         self.table_layout: np.ndarray = find_table_layout_on_frame(frame)
+        self._update_balls_radius(self.table_layout)
 
         # TODO: need to have correct order of corners
         self.board = Board(list(map(lambda corner: Point2D(corner), self.table_layout)),
@@ -82,9 +98,11 @@ class PoolCV:
             self.board.clear_balls()
             self.board.add_balls(PoolCV.convert_balls(self.balls))
 
-    def draw_game_on_image(self, frame):
+    def draw_game_on_image(self, frame, draw_net=True):
         visualize_balls_on_image(frame, self.balls)
         highlight_table_on_frame(frame, self.table_layout)
+        if draw_net:
+            PoolCV.draw_net_on_frame(frame, self.min_ball_radius_pixels)
 
     def get_model_image(self):
         if self.board is None:
@@ -119,3 +137,14 @@ class PoolCV:
         binary_black = np.zeros((image_shape[0], image_shape[1]), dtype=np.uint8)
         cv2.drawContours(binary_black, [contour], 0, 1, -1)
         return binary_black
+
+    @staticmethod
+    def draw_net_on_frame(frame, step):
+        height, width, _ = frame.shape
+        net_color = (60, 60, 60)
+        for x in range(0, width, step):
+            cv2.line(frame, (x, 0), (x, height), net_color, thickness=1)
+
+        for y in range(0, height, step):
+            cv2.line(frame, (0, y), (width, y), net_color, thickness=1)
+

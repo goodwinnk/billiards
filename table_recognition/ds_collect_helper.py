@@ -106,9 +106,11 @@ class Application:
 
         h, w = np_img.shape[: 2]
         self.d = min(150, int(0.25 * max(h, w)))
+        self.dx = 2 * self.d
+        self.dy = self.d
 
-        self.canvas.create_image(2 * self.d, self.d, image=self.img, anchor=NW)
-        self.set_window_size(4 * self.d + w, 2 * self.d + h)
+        self.canvas.create_image(self.dx, self.dy, image=self.img, anchor=NW)
+        self.set_window_size(2 * self.dx + w, 2 * self.dy + h)
 
         self.canvas.create_polygon(self.polygon_vertices.reshape(-1).tolist(), fill='', outline='green', width=2.5)
 
@@ -138,7 +140,7 @@ class Application:
     def get_relative_hull_with_pocket_flag(self):
         hull = []
         i = self.get_up_half_left_point()
-        v = np.array([self.d, self.d])
+        v = np.array([self.dx, self.dy])
         n = len(self.polygon_vertices)
         for iter in range(n):
             j = (iter + i) % n

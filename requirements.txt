@@ -13,3 +13,4 @@ tensorflow>=2.1.0
 dateparser
 youtube-dl
 catalyst
+albumentations

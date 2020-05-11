@@ -1,3 +1,5 @@
+from typing import List
+
 import cv2
 import numpy as np
 
@@ -17,7 +19,7 @@ def visualize_balls(image: np.ndarray, balls: BallRegion) -> np.ndarray:
     return visualize_balls_on_image(visualization, balls)
 
 
-def visualize_balls_on_image(image: np.ndarray, balls: BallRegion) -> np.ndarray:
+def visualize_balls_on_image(image: np.ndarray, balls: List[BallRegion]) -> np.ndarray:
     if not len(balls):
         return image
     for _, box, ball_type in balls:

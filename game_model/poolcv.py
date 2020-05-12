@@ -64,10 +64,9 @@ class PoolCV:
 
     def _update_board(self, frame, index):
         self.log.append(VideoEvent(VideoEvent.EventType.CAMERA_STABLE, index))
-        self.table_layout: np.ndarray = find_table_layout_on_frame(frame)
+        self.table_layout: np.ndarray = PoolCV.orient_table_for_model(find_table_layout_on_frame(frame))
         self._update_balls_radius(self.table_layout)
 
-        # TODO: need to have correct order of corners
         self.board = Board(list(map(lambda corner: Point2D(corner), self.table_layout)),
                            x=self.board_size[0], y=self.board_size[1])
 
@@ -148,3 +147,37 @@ class PoolCV:
         for y in range(0, height, step):
             cv2.line(frame, (0, y), (width, y), net_color, thickness=1)
 
+    @staticmethod
+    def orient_table_for_model(table_layout, ratio=2, precision=0.9):
+        n = len(table_layout)
+        assert n == 4
+
+        y_edge_sum = [table_layout[i][1] + table_layout[(i + 1) % n][1] for i in range(n)]
+        closest_to_bottom = max(y_edge_sum)
+        index_closest_to_bottom = y_edge_sum.index(closest_to_bottom)
+
+        edge_lengths = [distance.euclidean(table_layout[i], table_layout[(i + 1) % n]) for i in range(n)]
+
+        bottom_top_lengths = edge_lengths[index_closest_to_bottom] + edge_lengths[(index_closest_to_bottom + 2) % n]
+        side_lengths = edge_lengths[(index_closest_to_bottom + 1) % n] + edge_lengths[(index_closest_to_bottom + 3) % n]
+
+        is_counter_clockwise = table_layout[index_closest_to_bottom][0] <= \
+                               table_layout[(index_closest_to_bottom + 1) % n][0]
+
+        if bottom_top_lengths / side_lengths > ratio * precision:
+            # consider the closest edge to be a long rail
+            if is_counter_clockwise:
+                short_rail_bottom_left_corner_index = (index_closest_to_bottom + 1) % n
+            else:
+                short_rail_bottom_left_corner_index = index_closest_to_bottom
+        else:
+            # consider the closest edge to be a short rail
+            if is_counter_clockwise:
+                short_rail_bottom_left_corner_index = index_closest_to_bottom
+            else:
+                short_rail_bottom_left_corner_index = (index_closest_to_bottom + 1) % n
+
+        if is_counter_clockwise:
+            return np.roll(table_layout, -short_rail_bottom_left_corner_index, axis=0)
+        else:
+            return np.roll(table_layout[::-1], -(n - 1 - short_rail_bottom_left_corner_index), axis=0)

@@ -2,7 +2,7 @@ import argparse
 import math
 from collections import deque
 from copy import deepcopy
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Optional
 
 import cv2
 import numpy as np
@@ -236,8 +236,11 @@ def take_longest_sides_from_hull(hull, k):
 
 
 # Returns table polygon on a frame by 4 points
-def find_table_layout_on_frame(frame) -> np.ndarray:
+def find_table_layout_on_frame(frame) -> Optional[np.ndarray]:
     hull = find_table_polygon(deepcopy(frame))
+    if hull is None:
+        return None
+
     hull = remove_big_angles_from_hull(hull)
     hull = take_longest_sides_from_hull(hull, 4)
     (height, width, _) = frame.shape

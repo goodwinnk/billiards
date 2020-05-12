@@ -63,8 +63,15 @@ class PoolCV:
         self.max_ball_radius_pixels = int(max_side / self.table_size_mm[0] * self.ball_size_mm)
 
     def _update_board(self, frame, index):
+        un_oriented_table_layout = find_table_layout_on_frame(frame)
+        if un_oriented_table_layout is None:
+            self.board = None
+            self.table_layout = None
+            self.ball_detector = None
+            return
+
         self.log.append(VideoEvent(VideoEvent.EventType.CAMERA_STABLE, index))
-        self.table_layout: np.ndarray = PoolCV.orient_table_for_model(find_table_layout_on_frame(frame))
+        self.table_layout: np.ndarray = PoolCV.orient_table_for_model(un_oriented_table_layout)
         self._update_balls_radius(self.table_layout)
 
         self.board = Board(list(map(lambda corner: Point2D(corner), self.table_layout)),

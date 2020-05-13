@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from ball_detection.commons import Point, Rectangle, BallCandidate, CandidateGenerator
+from ball_detection.commons import Point, Rectangle, BallCandidate, CandidateGenerator, CANDIDATE_PADDING_COEFFICIENT
 
 
 MIN_BALL_CONTOUR_LEN = 40
@@ -51,7 +51,7 @@ class MotionDetector(CandidateGenerator):
                 cx, cy = center = Point(*map(int, contour.mean(axis=0)[0]))
                 xs, ys = contour.squeeze().T
                 max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
-                half_side = min(int(max_coord_delta * 1.5), n - cx, cx, m - cy, cy)
+                half_side = min(int(max_coord_delta * CANDIDATE_PADDING_COEFFICIENT), n - cx, cx, m - cy, cy)
                 box = Rectangle(cx - half_side, cy - half_side, cx + half_side + 1, cy + half_side + 1)
                 regions.append(BallCandidate(center, box))
         return regions

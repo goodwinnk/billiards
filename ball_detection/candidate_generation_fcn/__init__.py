@@ -1,0 +1,1 @@
+from ball_detection.candidate_generation_fcn.generator import FCNCandidateGenerator

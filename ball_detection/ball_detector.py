@@ -12,7 +12,7 @@ from ball_detection.commons import BallType, BallRegion, iou, CandidateGenerator
 
 # The distance metric is l0
 DUPLICATE_CENTER_MAX_DIST = 10
-DUPLICATE_MAX_IOU = .65
+DUPLICATE_MAX_IOU = .5
 
 
 def get_unique_balls(balls: List[BallRegion]) -> List[BallRegion]:

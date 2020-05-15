@@ -13,6 +13,7 @@ FRAMES_TO_DETECT_TABLE = 40
 
 
 # finds mask for convex polygon on the image of given size
+# hull is [(x1, y1), ..., (x_n, y_n)] where xs go along width, ys go along height
 def find_convex_hull_mask(size, hull):
     n, m = size
     mask = np.zeros((n, m))
@@ -245,7 +246,7 @@ def find_table_layout_on_frame(frame) -> Optional[np.ndarray]:
     hull = take_longest_sides_from_hull(hull, 4)
     (height, width, _) = frame.shape
     center = (width / 2, height / 2)
-    hull = sort_hull_vertexes(hull, center)
+    hull = sort_hull_vertices(hull, center)
     return hull
 
 
@@ -285,7 +286,7 @@ def find_table_layout(input_video_path, layout_path):
             layout_file.write('\n')
 
 
-def sort_hull_vertexes(hull: np.array, center: np.array) -> np.array:
+def sort_hull_vertices(hull: np.array, center: np.array) -> np.array:
     center_vectors = hull - center
     angles = np.arctan2(center_vectors[:, 0], center_vectors[:, 1])
     hull_point_indices = np.argsort(angles)
@@ -306,7 +307,7 @@ def get_table_hulls(frames: Iterable[np.array], resolution: Tuple[int]):
         hull = remove_big_angles_from_hull(hull)
         hull = take_longest_sides_from_hull(hull, 4)
 
-        hull = sort_hull_vertexes(hull, center)
+        hull = sort_hull_vertices(hull, center)
 
         layout.append(hull)
     return np.array(layout, dtype=np.int32)

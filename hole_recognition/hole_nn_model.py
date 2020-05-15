@@ -156,7 +156,8 @@ def prepare_model(show_test_res=False):
     if alpha == 1:
         test_img = None
         test_res = None
-    model.train(train_img, train_res)
+    model = HoleDetector()
+    model.train(train_img, train_res, test_img, test_res)
     if show_test_res:
         acc, predictions = model.test(test_img, test_res)
         print('Accuracy: {}'.format(acc))

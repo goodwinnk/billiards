@@ -41,7 +41,7 @@ def find_holes(model, img, table):
     for i in range(len(table)):
         border_images, _ = split_border(img, table[i], table[i-1], num=60)
         one_side_hole_probs = model.predict(border_images)
-        not_hole_prob.append((1 - one_side_hole_probs * k).prod())
+        not_hole_prob.append((1 - one_side_hole_probs * k).prod().item())
     prob0 = not_hole_prob[0] * not_hole_prob[2]
     prob1 = not_hole_prob[1] * not_hole_prob[3]
     return 1 if prob1 > prob0 else 0

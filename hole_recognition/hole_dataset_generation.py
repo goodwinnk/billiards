@@ -2,7 +2,7 @@ import cv2
 import os
 from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
-from hole_recognition.find_holes import split_border
+from hole_recognition.process_holes import split_border
 import sympy.geometry as geom
 import datetime
 

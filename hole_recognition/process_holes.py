@@ -45,3 +45,17 @@ def find_holes(model, img, table):
     prob0 = not_hole_prob[0] * not_hole_prob[2]
     prob1 = not_hole_prob[1] * not_hole_prob[3]
     return 1 if prob1 > prob0 else 0
+
+
+def rotate_table(model, img, table):
+    """
+    Rotates the table corners (returned by find_table_layout_on_frame)
+    so that the holes are at table[1]..table[2], table[3]..table[0] sides and
+    table[0] has the least y-value possible.
+    """
+    corners_order = find_holes(model, img, table)
+    if corners_order == 1:
+        table = np.roll(table, 1, axis=0)
+    if table[2][1] > table[0][1]:
+        table = np.roll(table, 2, axis=0)
+    return table

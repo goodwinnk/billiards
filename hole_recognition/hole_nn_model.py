@@ -1,35 +1,77 @@
-from tensorflow import keras
 import matplotlib.pyplot as plt
 import cv2
 import os
 import numpy as np
+import torch
+import torch.nn as nn
 
 
-class Model:
+class Net(nn.Module):
     def __init__(self):
-        self.model = keras.Sequential([
-            keras.layers.Flatten(input_shape=(20, 20, 3)),
-            keras.layers.Dense(128, activation='relu'),
-            keras.layers.Dense(2, activation='softmax')
-        ])
-        self.model.compile(optimizer='adam',
-                           loss='sparse_categorical_crossentropy',
-                           metrics=['accuracy'])
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(20*20*3, 128)
+        self.act1 = nn.ReLU()
+        self.fc2 = nn.Linear(128, 2)
+        self.act2 = nn.Softmax(dim=1)
 
-    def load(self, path='../data/sync/holes_model_weights/weights.pb'):
-        self.model.load_weights(path)
+    def forward(self, x):
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x).float()
+        x = x.flatten(start_dim=1)
+        x = self.act1(self.fc1(x))
+        x = self.act2(self.fc2(x))
+        return x
 
-    def save(self, path='../data/sync/holes_model_weights/weights.pb'):
-        self.model.save_weights(path)
 
-    def get_loss(self, test_img: np.array, test_res: np.array):
-        return self.model.evaluate(test_img, test_res, verbose=2)
+class HoleDetector:
+    def __init__(self):
+        self.model = Net()
 
-    def train(self, train_img: np.array, train_res: np.array):
-        self.model.fit(train_img, train_res, epochs=20)
+    def load(self, path='weights.pt'):
+        self.model.load_state_dict(torch.load(path))
+        self.model.eval()
+
+    def save(self, path='weights.pt'):
+        torch.save(self.model.state_dict(), path)
+
+    def train(self, train_img: np.array, train_res: np.array, test_img=None, test_res=None, epochs=400):
+        self.model.train()
+        train_img = torch.from_numpy(train_img)
+        train_res = torch.from_numpy(train_res).long()
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+        loss_function = nn.CrossEntropyLoss()
+        for epoch in range(epochs):
+            losses = []
+            optimizer.zero_grad()
+            prediction = self.predict(train_img)
+            loss = loss_function(prediction, train_res)
+            loss.backward()
+            optimizer.step()
+            losses.append(loss.detach().numpy())
+            if epoch % 10 == 0:
+                print('Epoch: {}'.format(epoch))
+                print(' Loss: {}'.format(np.mean(losses)))
+                if test_img is not None and test_res is not None:
+                    acc, _ = self.test(test_img=test_img, test_res=test_res)
+                    acc1, _ = self.test(test_img=np.array(train_img), test_res=np.array(train_res))
+                    print('\tAccuracy: {}\t{}'.format(acc, acc1))
 
     def predict(self, test_img: np.array):
-        return self.model.predict(test_img)
+        return self.model(test_img)
+
+    def test(self, test_img, test_res):
+        test_img = torch.from_numpy(test_img)
+        test_res = torch.from_numpy(test_res)
+        self.model.eval()
+        prediction = self.predict(test_img)
+        preds = []
+        acc = 1
+        for i in range(len(test_res)):
+            pr = torch.argmax(prediction[i]).item()
+            preds.append(pr)
+            if test_res[i] == pr:
+                acc += 1
+        return acc / test_res.shape[0], np.array(preds)
 
 
 def construct_dataset(alpha=0.9):
@@ -84,7 +126,7 @@ def show_results(test_img: np.array, test_res: np.array, predictions: np.array):
     not_holes = []
 
     for i in range(len(test_img)):
-        res = np.argmax(predictions[i])
+        res = predictions[i]
         if res != test_res[i]:
             if test_res[i] == 1:
                 holes.append(test_img[i])
@@ -95,7 +137,7 @@ def show_results(test_img: np.array, test_res: np.array, predictions: np.array):
         f = plt.figure(num=comment)
         for j in range(len(img)):
             f.add_subplot(j // 10 + 1, len(img), j % 10 + 1)
-            plt.imshow(cv2.cvtColor(img[j], cv2.COLOR_RGB2BGR))
+            plt.imshow(cv2.cvtColor(np.float32(img[j]), cv2.COLOR_RGB2BGR))
             plt.axis('off')
 
     plot_images('Holes recognized as not holes:', holes)
@@ -111,11 +153,14 @@ def prepare_model(show_test_res=False):
     """
     alpha = 0.9 if show_test_res else 1
     train_img, train_res, test_img, test_res = construct_dataset(alpha)
-    model = Model()
-    model.train(train_img, train_res)
+    if alpha == 1:
+        test_img = None
+        test_res = None
+    model = HoleDetector()
+    model.train(train_img, train_res, test_img, test_res)
     if show_test_res:
-        model.get_loss(test_img, test_res)
-        predictions = model.predict(test_img)
+        acc, predictions = model.test(test_img, test_res)
+        print('Accuracy: {}'.format(acc))
         show_results(test_img, test_res, predictions)
     return model
 

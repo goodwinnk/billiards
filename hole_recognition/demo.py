@@ -1,5 +1,5 @@
-from hole_recognition.hole_nn_model import Model
-from hole_recognition.find_holes import find_holes, split_border
+from hole_recognition.hole_nn_model import HoleDetector
+from hole_recognition.process_holes import find_holes, split_border
 from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
 import cv2
@@ -61,10 +61,9 @@ def mark_hole_probabilies_demo(images_path, result_path, model):
                 a, b = table[i], table[i-1]
                 border_images, border_squares = split_border(img, a, b, num=60)
                 probs = model.predict(border_images)
-
                 for j in range(len(border_squares)):
                     sq = border_squares[j]
-                    prob = probs[j][1]
+                    prob = probs[j][1].item()
                     if prob < 0.01:
                         continue
                     x, y, r = sq
@@ -78,7 +77,7 @@ if __name__ == '__main__':
     demo_images_path = '../data/sync/holes_recognition_demo/images'
     demo1_result_path = '../data/sync/holes_recognition_demo/table_borders_result'
     demo2_result_path = '../data/sync/holes_recognition_demo/probabilities_result'
-    m = Model()
+    m = HoleDetector()
     m.load()
     mark_hole_probabilies_demo(demo_images_path, demo2_result_path, m)
     mark_hole_table_borders_demo(demo_images_path, demo1_result_path, m)

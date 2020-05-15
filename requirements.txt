@@ -14,3 +14,4 @@ youtube-dl
 catalyst
 albumentations
 pandas
+segmentation_models_pytorch

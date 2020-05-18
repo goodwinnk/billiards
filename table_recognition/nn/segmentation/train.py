@@ -175,6 +175,9 @@ if __name__ == '__main__':
     SEED = args.seed
     ROOT = Path(args.dataset)
 
+    np.seed(SEED)
+    torch.manual_seed(SEED)
+
     img_paths, targets = retrieve_dataset(ROOT)
 
     train_transforms = compose([

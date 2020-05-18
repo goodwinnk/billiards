@@ -1,32 +1,25 @@
-import os
-from typing import Tuple, List, Dict
 import argparse
+import os
 from pathlib import Path
-import numpy as np
-import pandas as pd
-from table_recognition.nn.table_recognition_ds import TableRecognitionDataset
+from time import time
+from typing import Dict
+
 import matplotlib.pyplot as plt
-from table_recognition.highlight_table import highlight_table_on_frame
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader
-import collections
-import segmentation_models_pytorch as smp
+import numpy as np
+import torch
 from catalyst import utils
-from skimage.io import imread as gif_imread
-from torch import nn, optim
 from catalyst.contrib.nn import DiceLoss, IoULoss, RAdam, Lookahead
 from catalyst.dl import SupervisedRunner, DiceCallback, IouCallback, CriterionCallback, MetricAggregationCallback
-from table_recognition.nn.augm import *
 from catalyst.dl.utils import trace
-import torch
+from torch import nn, optim
+from torch.utils.data import DataLoader
+
+from table_recognition.nn.augm import *
+from table_recognition.nn.table_recognition_ds import retrieve_dataset, get_loaders
 from table_recognition.table_recognition_models import (
     TableRecognizer,
     NeuralNetworkBasedTableRecognizer,
-    HeuristicsBasedTableRecognizer,
 )
-from table_recognition.find_table_polygon import find_table_polygon
-from time import time
-from albumentations.pytorch import ToTensor
 
 
 def parse_arguments():
@@ -34,69 +27,6 @@ def parse_arguments():
     parser.add_argument('--dataset', required=True, help='Path to the directory with dataset')
     parser.add_argument('--seed', required=False, type=str, default=42, help='Seed for random generators')
     return parser.parse_args()
-
-
-def get_loaders(
-    img_paths: np.ndarray,
-    targets: np.ndarray,
-    random_state: int,
-    valid_size_ratio: float = 0.2,
-    batch_size: int = 32,
-    num_workers: int = 4,
-    img_size: Tuple[int, int] = (224, 224),
-    train_transforms_fn=None,
-    valid_transforms_fn=None
-) -> collections.OrderedDict:
-    indices = np.arange(len(img_paths))
-
-    train_indices, valid_indices = train_test_split(
-      indices, test_size=valid_size_ratio, random_state=random_state, shuffle=True
-    )
-
-    train_ds = TableRecognitionDataset(img_paths[train_indices], targets[train_indices], img_size, train_transforms_fn)
-    valid_ds = TableRecognitionDataset(img_paths[valid_indices], targets[valid_indices], img_size, valid_transforms_fn)
-
-    train_loader = DataLoader(
-        dataset=train_ds,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers
-    )
-
-    valid_loader = DataLoader(
-        dataset=valid_ds,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers
-    )
-
-    loaders = collections.OrderedDict()
-    loaders['train'] = train_loader
-    loaders['valid'] = valid_loader
-
-    return loaders
-
-
-# Recursively collects all *.csv files, concat them and returns pair of:
-# First is the numpy array of absolute paths to the images
-# Second is the numpy array of target
-# List and array correspond to each other
-def retrieve_dataset(root: Path) -> Tuple[np.ndarray, np.ndarray]:
-    layout_files = list(sorted(root.rglob('*.csv')))
-
-    # Concatenates layout path and image path
-    def concat_paths(lfile_dir, x):
-        x[0] = Path(lfile_dir) / x[0]
-        return x
-
-    total_df = np.vstack([
-        pd.read_csv(lfile, header=None)
-            .apply(lambda x: concat_paths(lfile.parent, x), axis=1)
-            .values
-        for lfile in layout_files
-    ])
-
-    return total_df[:, 0], total_df[:, 1:]
 
 
 def train_segmentation_model(
@@ -257,7 +187,7 @@ if __name__ == '__main__':
         img_paths=img_paths,
         targets=targets,
         random_state=SEED,
-        batch_size=8,
+        batch_size=4,
         train_transforms_fn=train_transforms,
         valid_transforms_fn=valid_transforms,
     )
@@ -286,6 +216,7 @@ if __name__ == '__main__':
         
         statistics = get_statistics(loaders['valid'], table_recognizer, verbose=verbose)
         
+        print(f'{encoder_name} + {decoder_name}')
         print(f'IoU = {statistics.mean_iou}')
         print(f'DICE = {statistics.mean_dice}')
         print(f'time = {statistics.mean_time}')
@@ -355,12 +286,12 @@ if __name__ == '__main__':
 #==============================INFERENCE NN====================================================================================================
 
     # infer_model(encoder_name='resnet18', decoder_name='Linknet')
-    # infer_model(encoder_name='resnet18', decoder_name='PSPNet')
+    infer_model(encoder_name='resnet18', decoder_name='PSPNet')
     # infer_model(encoder_name='resnet18', decoder_name='Unet')
     # infer_model(encoder_name='resnet18', decoder_name='FPN')
 
     # infer_model(encoder_name='mobilenet_v2', decoder_name='Linknet')
-    # infer_model(encoder_name='mobilenet_v2', decoder_name='PSPNet', verbose=True)
+    # infer_model(encoder_name='mobilenet_v2', decoder_name='PSPNet')
     # infer_model(encoder_name='mobilenet_v2', decoder_name='Unet')
     # infer_model(encoder_name='mobilenet_v2', decoder_name='FPN')
 
@@ -371,6 +302,7 @@ if __name__ == '__main__':
 
 #==============================INFERENCE Heuristics BASED====================================================================================================
 
+    # print('Heuristics BASED')
     # table_recognizer = HeuristicsBasedTableRecognizer(loader=loaders['valid'])
     # statistics = get_statistics(loaders['valid'], table_recognizer, verbose=False)    
     # print(f'IoU = {statistics.mean_iou}')

@@ -7,6 +7,7 @@ from PIL import Image
 import collections
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
+import torch
 
 from table_recognition.find_table_polygon import find_convex_hull_mask
 
@@ -46,8 +47,6 @@ class TableRecognitionDataset(Dataset):
              for i in range(4)]
         )
 
-        # print(img)
-
         result = {
             'image': img,
             'mask': table_mask
@@ -55,6 +54,8 @@ class TableRecognitionDataset(Dataset):
 
         if self.transforms is not None:
             result = self.transforms(**result)
+
+        result['table'] = torch.Tensor(table.astype('float64')).float()
 
         return result
 

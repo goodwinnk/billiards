@@ -84,6 +84,16 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_canonical_4_polygon(points: np.ndarray):
+    points = list(zip(points[0::2], points[1::2]))
+    points.sort(key=lambda x: x[0])
+    if points[0][1] > points[1][1]:
+        points[0], points[1] = points[1], points[0]
+    if points[2][1] < points[3][1]:
+        points[2], points[3] = points[3], points[2]
+    return points
+
+
 # finds mask of pixels which are close enough to the mean color of the table
 def find_table_mask(
         frame,

@@ -96,7 +96,7 @@ def train_segmentation_model(
         load_best_on_end=True,
     )
     best_model_save_dir = os.path.join(logdir, 'save')
-    os.makedirs(best_model_save_dir)
+    os.makedirs(best_model_save_dir, True)
     torch.save(model, os.path.join(best_model_save_dir, 'best_model.pth'))   # save best model (by valid loss)
     batch = next(iter(loaders["valid"]))
     try:

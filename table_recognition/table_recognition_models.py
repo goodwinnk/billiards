@@ -87,7 +87,6 @@ class HeuristicsBasedTableRecognizer(TableRecognizer):
 
     def predict_table_polygon(self, batch: torch.Tensor) -> np.ndarray:
         hulls = []
-        import matplotlib.pyplot as plt
         for frame in batch:
             image = utils.tensor_to_ndimage(frame)
             image = (image * 255 + 0.5).astype(int).clip(0, 255).astype('uint8')

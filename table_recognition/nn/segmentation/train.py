@@ -175,7 +175,7 @@ if __name__ == '__main__':
     SEED = args.seed
     ROOT = Path(args.dataset)
 
-    np.seed(SEED)
+    np.random.seed(SEED)
     torch.manual_seed(SEED)
 
     img_paths, targets = retrieve_dataset(ROOT)
@@ -289,7 +289,7 @@ if __name__ == '__main__':
 #==============================INFERENCE NN====================================================================================================
 
     # infer_model(encoder_name='resnet18', decoder_name='Linknet')
-    infer_model(encoder_name='resnet18', decoder_name='PSPNet')
+    infer_model(encoder_name='resnet18', decoder_name='PSPNet', verbose=True)
     # infer_model(encoder_name='resnet18', decoder_name='Unet')
     # infer_model(encoder_name='resnet18', decoder_name='FPN')
 

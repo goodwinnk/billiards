@@ -14,7 +14,7 @@ import subprocess
 
 # Downloads all videos from youtube channel, takes n_frames uniform frames from each video and saves them into
 # structured directories (channel_id/video_id/*.png)
-def download_frame_from_yotube_video(channel_url, n_frames, output_path):
+def download_frames_from_yotube_channel(channel_url, n_frames, output_path):
     with YoutubeDL({'format': 'mp4'}) as ydl:
         info_dict = ydl.extract_info(channel_url, download=False)
         channel_id = info_dict.get('id')

@@ -5,7 +5,7 @@ PYTHONPATH = 'PYTHONPATH'
 if PYTHONPATH not in os.environ:
     os.environ[PYTHONPATH] = ''
 if len(os.environ[PYTHONPATH]) > 0:
-    os.environ[PYTHONPATH] += f':{os.path.abspath(os.path.join("..", ".."))}'
+    os.environ[PYTHONPATH] += f':{os.path.abspath("..", "..")}'
 else:
     os.environ[PYTHONPATH] = os.path.abspath(os.path.join('..', '..'))
 sys.path.append(os.environ[PYTHONPATH])
@@ -16,8 +16,7 @@ from table_recognition.find_table_polygon import find_table_layout
 from pathlib import Path
 import shutil
 
-
-ROOT = Path('..') / Path('..')
+ROOT = Path('.') / '..' / '..'
 DATA_ROOT = ROOT / Path('data')
 SYNC_ROOT = DATA_ROOT / Path('sync')
 LOCAL_ROOT = DATA_ROOT / 'local'

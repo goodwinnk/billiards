@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 from scipy.spatial import ConvexHull
 
+import table_recognition.table_recognition_models as tr_models
 
 FRAMES_TO_DETECT_TABLE = 40
 
@@ -296,6 +297,17 @@ def find_table_layout(input_video_path, layout_path):
             for x, y in hull:
                 layout_file.write(f'{x} {y} ')
             layout_file.write('\n')
+
+
+# takes video, reads it batch by batch, applies recognizer to each batch and finds table
+# polygons for each frame and saves layout
+def buffered_find_table_layout(
+        input_video_path,
+        layout_path,
+        batch_size,
+        table_recognizer: tr_models.TableRecognizer
+):
+    pass
 
 
 def sort_hull_vertices(hull: np.array, center: np.array) -> np.array:

@@ -1,6 +1,6 @@
 import os
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, Tuple
 
 import cv2
 import dateparser
@@ -40,6 +40,12 @@ def download_frames_from_yotube_channel(channel_url, n_frames, output_path):
 # Download youtube video
 def download_youtube_video(url, output_path: Optional[str] = None):
     return YouTube(url).streams.get_highest_resolution().download(output_path)
+
+
+def get_video_resolution(input_video_path: str) -> Tuple[int, int]:
+    capture = cv2.VideoCapture(input_video_path)
+    response, frame = capture.read()
+    return frame.shape[0], frame.shape[1]
 
 
 # Check video frame by frame

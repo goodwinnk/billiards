@@ -2,13 +2,13 @@ import argparse
 import math
 from collections import deque
 from copy import deepcopy
-from time import time
 from typing import Iterable, Tuple, Optional
 
 import cv2
 import numpy as np
 from scipy.spatial import ConvexHull
 
+import table_recognition.find_table_polygon as tp
 import table_recognition.table_recognition_models as tr_models
 
 FRAMES_TO_DETECT_TABLE = 40
@@ -307,39 +307,15 @@ def buffered_find_table_layout(
         table_recognizer: tr_models.TableRecognizer,
         img_size: Tuple[int, int]
 ):
-    print(f'img_size = {img_size}')
-    sum_time = 0
-    frames = 0
     with open(layout_path, 'w') as layout_file:
         while True:
-            st = time()
             tables = table_recognizer.next_polygon()
-            sum_time += time() - st
             if tables is None:
                 break
-            frames += tables.shape[0]
             for table in tables:
-                import table_recognition.table_polygon as tp
                 canonical_table = tp.get_canonical_4_polygon(table)
-                # print(canonical_table)
                 table = np.array([[int(y * img_size[0]), int(x * img_size[1])] for x, y in canonical_table]).reshape(-1)
-                # print(table)
                 layout_file.write(' '.join(map(str, table)) + '\n')
-                # layout_file.write(f'100 100 100 200 200 200 200 100\n')
-
-                # import matplotlib.pyplot as plt
-                #
-                # table_mask = tp.find_convex_hull_mask(
-                #     img_size,
-                #     [(int(x * img_size[1]),
-                #       int(y * img_size[0]))
-                #      for x, y in canonical_table]
-                # ).astype(bool)
-                #
-                # plt.imshow(table_mask)
-                # plt.show()
-
-    print(f'FPS = {frames / sum_time}')
 
 
 def sort_hull_vertices(hull: np.array, center: np.array) -> np.array:

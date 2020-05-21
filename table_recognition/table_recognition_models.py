@@ -9,12 +9,8 @@ import torch
 from catalyst import utils
 from torch.utils.data import DataLoader
 
-from table_recognition.find_table_polygon import (
-    find_convex_hull_mask,
-    find_table_polygon,
-    remove_big_angles_from_hull,
-    take_longest_sides_from_hull,
-    get_canonical_4_polygon)
+
+import table_recognition.find_table_polygon as tp
 
 
 class TableRecognizer:
@@ -57,7 +53,10 @@ class TableRecognizer:
         """
         Takes next batch from the loader and predicts table polygon for it
         """
-        return self.predict_table_polygon(next(iter(self.iter))['image'])
+        try:
+            return self.predict_table_polygon(next(iter(self.iter))['image'])
+        except StopIteration:
+            return None
 
     def predict_table_mask(self, batch: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
         """
@@ -72,10 +71,10 @@ class TableRecognizer:
         polygons = self.predict_table_polygon(batch)
         image_size = batch.shape[2: 4]
         return np.array([
-            find_convex_hull_mask(
+            tp.find_convex_hull_mask(
                 image_size,
                 [(int(x * image_size[0]), int(y * image_size[1]))
-                 for x, y in get_canonical_4_polygon(polygon)]
+                 for x, y in tp.get_canonical_4_polygon(polygon)]
             )
             for polygon in polygons
         ])
@@ -98,9 +97,9 @@ class TableRecognizer:
             image = utils.tensor_to_ndimage(frame)
             image = (image * 255 + 0.5).astype(int).clip(0, 255).astype('uint8')
             try:
-                hull = find_table_polygon(deepcopy(image))
-                hull = remove_big_angles_from_hull(hull)
-                hull = take_longest_sides_from_hull(hull, 4).reshape(-1).astype('float32')
+                hull = tp.find_table_polygon(deepcopy(image))
+                hull = tp.remove_big_angles_from_hull(hull)
+                hull = tp.take_longest_sides_from_hull(hull, 4).reshape(-1).astype('float32')
                 hull[0::2] = hull[0::2] / image.shape[0]
                 hull[1::2] = hull[1::2] / image.shape[1]
                 hulls.append(hull)
@@ -158,8 +157,8 @@ def get_statistics(
             mask = mask.astype(bool)
             truth = truth.numpy().astype(bool)
 
-            canonical_table = get_canonical_4_polygon(table)
-            table_mask = find_convex_hull_mask(
+            canonical_table = tp.get_canonical_4_polygon(table)
+            table_mask = tp.find_convex_hull_mask(
                 img_size,
                 [(int(x * img_size[0]),
                   int(y * img_size[1]))
@@ -227,10 +226,10 @@ class NNSegmentationBasedRecognizer(TableRecognizer):
             image = utils.tensor_to_ndimage(frame)
             image = (image * 255 + 0.5).astype(int).clip(0, 255).astype('uint8')
             try:
-                hull = find_table_polygon(deepcopy(image), mask=mask)
+                hull = tp.find_table_polygon(deepcopy(image), mask=mask)
                 # TODO: refactor (code duplication with super class default implementation)
-                hull = remove_big_angles_from_hull(hull)
-                hull = take_longest_sides_from_hull(hull, 4).reshape(-1).astype('float32')
+                hull = tp.remove_big_angles_from_hull(hull)
+                hull = tp.take_longest_sides_from_hull(hull, 4).reshape(-1).astype('float32')
                 hull[0::2] = hull[0::2] / image.shape[0]
                 hull[1::2] = hull[1::2] / image.shape[1]
                 hulls.append(hull)

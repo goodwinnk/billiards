@@ -1,12 +1,14 @@
 from pathlib import Path
 from typing import Tuple
 
+import cv2
 import numpy as np
 import pandas as pd
 from PIL import Image
 import collections
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.data.dataset import IterableDataset
 import torch
 
 from table_recognition.find_table_polygon import find_convex_hull_mask
@@ -58,6 +60,28 @@ class TableRecognitionDataset(Dataset):
         result['table'] = torch.Tensor(table.astype('float64')).float()
 
         return result
+
+
+class VideoTableRecognitionDataset(IterableDataset):
+
+    def __init__(self, input_video_path: str, nn_img_size: np.ndarray, transforms):
+        self.capture = cv2.VideoCapture(input_video_path)
+        self.nn_img_size = nn_img_size
+        self.transforms = transforms
+
+    def __iter__(self):
+        while self.capture.isOpened():
+            response, frame = self.capture.read()
+            if not response:
+                break
+            img = Image.fromarray(frame)
+            img = np.array(img.resize(self.nn_img_size))[:, :, ::-1]
+            result = {
+                'image': img
+            }
+            if self.transforms is not None:
+                result = self.transforms(**result)
+            yield result
 
 
 # Recursively collects all *.csv files, concat them and returns pair of:

@@ -151,11 +151,13 @@ def find_largest_area_component_mask(mask, center_ratio_size: float = 0.5):
 
 def find_table_polygon(
         frame,
-        largest_component_center_ratio_size: int = 0.5
+        largest_component_center_ratio_size: int = 0.5,
+        mask=None
 ):
     frame = frame[:, :, ::-1]
 
-    mask = find_table_mask(frame)
+    if mask is None:
+        mask = find_table_mask(frame)
     mask = find_largest_area_component_mask(mask, largest_component_center_ratio_size)
 
     masked_frame = deepcopy(frame)

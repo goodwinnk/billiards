@@ -1,10 +1,8 @@
 import argparse
 import os
 from pathlib import Path
-from time import time
 from typing import Dict
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from catalyst import utils
@@ -18,8 +16,8 @@ from table_recognition.nn.augm import *
 from table_recognition.nn.table_recognition_ds import retrieve_dataset, get_loaders
 from table_recognition.table_recognition_models import (
     TableRecognizer,
-    NeuralNetworkBasedTableRecognizer,
-)
+    NNSegmentationBasedRecognizer,
+    get_statistics)
 
 
 def parse_arguments():
@@ -105,71 +103,6 @@ def train_segmentation_model(
         pass
 
 
-class Statistics:
-
-    def __init__(
-            self,
-            mean_iou: float,
-            mean_dice: float,
-            mean_time: float
-    ):
-        self.mean_iou = mean_iou
-        self.mean_dice = mean_dice
-        self.mean_time = mean_time
-
-
-def get_statistics(loader: DataLoader, table_recognizer: TableRecognizer, verbose=False) -> Statistics:
-    truth_ptr = iter(loader)
-    images_ptr = iter(loader)
-
-    sum_iou = 0
-    sum_dice = 0
-    cnt = 0
-    sum_time = 0
-
-    while True:
-        st = time()
-        masks = table_recognizer.next_mask()
-        if masks is None:
-            break
-        sum_time += time() - st
-        truths = next(truth_ptr)['mask']
-        for mask, truth in zip(masks, truths):
-            mask = mask.astype(bool)
-            truth = truth.numpy().astype(bool)
-
-            iou = np.sum(mask & truth) / np.sum(mask | truth)
-            dice = 2 * np.sum(mask & truth) / (np.sum(mask) + np.sum(truth))
-
-            sum_iou += iou
-            sum_dice += dice
-            cnt += 1
-
-        if verbose:
-            images = next(images_ptr)['image']
-            for mask, truth, image in zip(masks, truths, images):
-                plt.figure(figsize=(14, 10))
-                plt.subplot(1, 3, 1)
-                plt.imshow(mask)
-                plt.title(f"Mask")
-                plt.subplot(1, 3, 2)
-                plt.imshow(truth.reshape(truth.shape[-2:]))
-                plt.title(f'Truth')
-                plt.subplot(1, 3, 3)
-
-                image = utils.tensor_to_ndimage(image)
-                image = (image * 255 + 0.5).astype(int).clip(0, 255).astype('uint8')
-
-                plt.imshow(image)
-                plt.show()
-
-    return Statistics(
-        mean_iou=sum_iou / cnt,
-        mean_dice=sum_dice / cnt,
-        mean_time=sum_time / cnt
-    )
-
-
 if __name__ == '__main__':
     args = parse_arguments()
     SEED = args.seed
@@ -190,7 +123,7 @@ if __name__ == '__main__':
         img_paths=img_paths,
         targets=targets,
         random_state=SEED,
-        batch_size=4,
+        batch_size=8,
         train_transforms_fn=train_transforms,
         valid_transforms_fn=valid_transforms,
     )
@@ -198,7 +131,7 @@ if __name__ == '__main__':
     def train_model(encoder_name: str, decoder_name: str, model_class_name, num_epochs: int, loaders: Dict[str, DataLoader]):
         train_segmentation_model(
             model=model_class_name(encoder_name=encoder_name, classes=1),
-            logdir=f'./table_recognition/nn/segmentation/logs/{encoder_name}_{decoder_name}',
+            logdir=f'./table_recognition/nn/segmentation/logs2/{encoder_name}_{decoder_name}',
             num_epochs=num_epochs,
             loaders=loaders
         )
@@ -214,16 +147,13 @@ if __name__ == '__main__':
             model.to('cpu')
         else:
             raise Exception(f'Unresolved load mode = {load_mode}')
-        table_recognizer = NeuralNetworkBasedTableRecognizer(model=model, loader=loaders['valid'])
+        table_recognizer = NNSegmentationBasedRecognizer(model=model, loader=loaders['valid'])
         # table_recognizer = HeuristicsBasedTableRecognizer(loader=loaders['valid'])
         
         statistics = get_statistics(loaders['valid'], table_recognizer, verbose=verbose)
         
         print(f'{encoder_name} + {decoder_name}')
-        print(f'IoU = {statistics.mean_iou}')
-        print(f'DICE = {statistics.mean_dice}')
-        print(f'time = {statistics.mean_time}')
-        print(f'fps = {1 / statistics.mean_time}')
+        print(statistics)
 
 
     # train_segmentation_model(
@@ -289,7 +219,7 @@ if __name__ == '__main__':
 #==============================INFERENCE NN====================================================================================================
 
     # infer_model(encoder_name='resnet18', decoder_name='Linknet')
-    infer_model(encoder_name='resnet18', decoder_name='PSPNet', verbose=True)
+    infer_model(encoder_name='resnet18', decoder_name='PSPNet', verbose=False)
     # infer_model(encoder_name='resnet18', decoder_name='Unet')
     # infer_model(encoder_name='resnet18', decoder_name='FPN')
 
@@ -305,10 +235,7 @@ if __name__ == '__main__':
 
 #==============================INFERENCE Heuristics BASED====================================================================================================
 
-    # print('Heuristics BASED')
-    # table_recognizer = HeuristicsBasedTableRecognizer(loader=loaders['valid'])
-    # statistics = get_statistics(loaders['valid'], table_recognizer, verbose=False)    
-    # print(f'IoU = {statistics.mean_iou}')
-    # print(f'DICE = {statistics.mean_dice}')
-    # print(f'time = {statistics.mean_time}')
-    # print(f'fps = {1 / statistics.mean_time}')
+    print('Heuristics BASED')
+    table_recognizer = TableRecognizer(loader=loaders['valid'])
+    statistics = get_statistics(loaders['valid'], table_recognizer, verbose=False)
+    print(statistics)

@@ -20,8 +20,8 @@ if __name__ == '__main__':
         return frame
 
     frame_by_frame_play(
-        video_path="../data/sync/poolcv_demo/20200120_115235-resized.m4v",
-        start_from_frame=570,
+        video_path="../data/sync/poolcv_demo/moving_table.mp4",
+        start_from_frame=0,
         frame_modifier=frame_modifier,
         stop_on_start=False
     )

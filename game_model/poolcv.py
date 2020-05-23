@@ -13,6 +13,7 @@ from table_recognition.find_table_polygon import find_table_layout_on_frame
 from table_recognition.highlight_table import highlight_table_on_frame
 from hole_recognition.hole_nn_model import HoleDetector
 from hole_recognition.process_holes import rotate_table
+from table_tracker.tracker import TableTracker
 
 
 class VideoEvent:
@@ -34,7 +35,8 @@ class PoolCV:
     def __init__(self, ball_detect_net_path: str,
                  hole_detect_net_path: str = None,
                  table_size_mm: Tuple[int, int] = (990, 1980),
-                 ball_size_mm: int = 57):
+                 ball_size_mm: int = 57,
+                 track_table: bool = True):
         self.table_size_mm = table_size_mm
         self.ball_size_mm = ball_size_mm
 
@@ -45,6 +47,10 @@ class PoolCV:
         if hole_detect_net_path is not None:
             self.hole_detector = HoleDetector()
             self.hole_detector.load(hole_detect_net_path)
+
+        self.table_tracker: Optional[TableTracker] = None
+        if track_table:
+            self.table_tracker = TableTracker()
 
         # TODO: Create type for ball result with correspondent accessors
         self.balls: List[BallRegion] = []
@@ -60,8 +66,9 @@ class PoolCV:
 
     # noinspection PyMethodMayBeStatic,PyUnusedLocal
     def _need_to_update_board(self, frame, index):
-        # TODO: need to understand that board should be updated
-        return False
+        if self.table_tracker is None:
+            return False
+        return self.table_tracker.has_changed()
 
     def _update_balls_radius(self, table_layout):
         n = len(table_layout)
@@ -87,6 +94,9 @@ class PoolCV:
             self.table_layout: np.array = rotate_table(self.hole_detector, frame, un_oriented_table_layout)
         self._update_balls_radius(self.table_layout)
 
+        if self.table_tracker is not None:
+            self.table_tracker.reset(frame, self.table_layout)
+
         self.board = Board(list(map(lambda corner: Point2D(corner), self.table_layout)),
                            x=self.board_size[0], y=self.board_size[1])
 
@@ -102,7 +112,11 @@ class PoolCV:
             net_path=self.ball_detect_net_path)
 
     def update(self, frame, index):
+        if self.table_tracker is not None:
+            self.table_tracker.update(frame)
+
         if self.board is None or self._need_to_update_board(frame, index):
+            print('Updating....')
             self._update_board(frame, index)
 
         if self.board is None:

@@ -3,7 +3,12 @@ import numpy as np
 import cv2
 
 
-def split_border(img, a, b, num=20, dataset_img_shape=(20, 20)):
+def get_model_input(img, x, y, r, inp_img_shape=(20, 20)):
+    cropped = img[y - r:y + r, x - r:x + r, :]
+    return cv2.resize(cropped, inp_img_shape, interpolation=cv2.INTER_AREA)
+
+
+def split_border(img, a, b, num=20):
     """
     Split table border with a and b coordinates of endings into num amount of square samples
     to find holes in.
@@ -21,9 +26,7 @@ def split_border(img, a, b, num=20, dataset_img_shape=(20, 20)):
         mid = (a * i + b * (num - i)) / num
         x, y = round(mid[0]), round(mid[1])
         if 0 <= y - r and y + r < n and 0 <= x - r and x + r < m:
-            cropped = img[y-r:y+r, x-r:x+r, :]
-            cropped = cv2.resize(cropped, dataset_img_shape, interpolation=cv2.INTER_AREA)
-            border_images.append(cropped)
+            border_images.append(get_model_input(img, x, y, r))
             border_squares.append((x, y, r))
     return np.array(border_images), np.array(border_squares)
 
@@ -59,3 +62,25 @@ def rotate_table(model, img, table):
     if table[2][1] > table[0][1]:
         table = np.roll(table, 2, axis=0)
     return table
+
+
+def check_table_corners(model, img, table):
+    """
+    Checks the correctness of the found table by checking the corner holes using the hole recognition model.
+    Returns True if the table is most probably correct, False otherwise.
+    """
+    a, b, c, d = tuple(map(geom.Point, table))
+    (n, m, _) = img.shape
+    r = round((a.distance(b) + b.distance(c) + c.distance(d) + d.distance(a)) / (4 * 20))
+    samples = []
+    for v in table:
+        x, y = v
+        if 0 <= y - r and y + r < n and 0 <= x - r and x + r < m:
+            sample = get_model_input(img, x, y, r)
+            samples.append(sample)
+    if len(samples) == 0:
+        return True
+    samples = np.array(samples)
+    probs = model.predict(samples)  # the probabilities of holes for each table corner
+    probs = np.array(probs.detach())
+    return np.any(probs > 0.8)

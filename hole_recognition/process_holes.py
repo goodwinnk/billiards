@@ -19,7 +19,7 @@ def split_border(img, a, b, num=20):
     a = geom.Point(a)
     b = geom.Point(b)
     (n, m, _) = img.shape
-    r = round(a.distance(b) / num)
+    r = max(round(a.distance(b) / num), 1)
     border_images = []
     border_squares = []
     for i in range(num // 10, num * 9 // 10):
@@ -83,4 +83,6 @@ def check_table_corners(model, img, table):
     samples = np.array(samples)
     probs = model.predict(samples)  # the probabilities of holes for each table corner
     probs = np.array(probs.detach())
-    return np.any(probs > 0.8)
+    probs = probs[:, 1:]
+    print(probs)
+    return np.count_nonzero(probs > 0.8) > 0.5 * len(probs)

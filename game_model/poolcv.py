@@ -22,13 +22,16 @@ class VideoEvent:
         GAME_ENDED = 2  # TODO: Detect game has ended
         SHOT_STARTED = 3  # TODO
         SHOT_ENDED = 4  # TODO
-        BALL_IN_THE_POCKET = 3  # TODO
-        CAMERA_CHANGED = 4  # TODO
-        CAMERA_STABLE = 5
+        BALL_IN_THE_POCKET = 5  # TODO
+        CAMERA_CHANGED = 6  # TODO
+        CAMERA_STABLE = 7
 
     def __init__(self, event_type: EventType, frame_index: int):
         self.type = event_type
         self.frame_index = frame_index
+
+    def __str__(self) -> str:
+        return "{} {}".format(self.type, self.frame_index)
 
 
 class PoolCV:

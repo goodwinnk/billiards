@@ -136,9 +136,10 @@ class PoolCV:
 
     def draw_game_on_image(self, frame, draw_net=True):
         visualize_balls_on_image(frame, self.balls)
-        highlight_table_on_frame(frame, self.table_layout)
-        if draw_net:
-            PoolCV.draw_net_on_frame(frame, self.min_ball_radius_pixels)
+        if self.table_layout is not None:
+            highlight_table_on_frame(frame, self.table_layout)
+            if draw_net:
+                PoolCV.draw_net_on_frame(frame, self.min_ball_radius_pixels)
 
     def get_model_image(self):
         if self.board is None:

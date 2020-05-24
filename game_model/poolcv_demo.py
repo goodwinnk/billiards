@@ -2,7 +2,7 @@ from itertools import takewhile
 
 from cv2 import imshow, destroyWindow, namedWindow, WINDOW_AUTOSIZE
 
-from data_utils.utils import frame_by_frame_play
+from data_utils.utils import frame_by_frame_play, download_youtube_video
 from game_model.poolcv import PoolCV
 
 if __name__ == '__main__':
@@ -25,8 +25,12 @@ if __name__ == '__main__':
         return frame
 
     frame_by_frame_play(
-        video_path="../data/sync/poolcv_demo/moving_table.mp4",
-        start_from_frame=0,
+        video_path=download_youtube_video(
+            "https://www.youtube.com/watch?v=mF7iqCiHt1Y&t=84s",
+            output_path="../data/local",
+            filename="TOP_15_BEST_SHOTS_Mosconi_Cup_2019_9_ball_Pool.mp4"
+        ),
+        start_from_frame=330,
         frame_modifier=frame_modifier,
         stop_on_start=False
     )

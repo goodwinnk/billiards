@@ -38,8 +38,8 @@ def download_frames_from_yotube_channel(channel_url, n_frames, output_path):
 
 
 # Download youtube video
-def download_youtube_video(url, output_path: Optional[str] = None):
-    return YouTube(url).streams.get_highest_resolution().download(output_path)
+def download_youtube_video(url, output_path: Optional[str] = None, filename: Optional[str] = None):
+    return YouTube(url).streams.get_highest_resolution().download(output_path, filename=filename)
 
 
 def get_video_resolution(input_video_path: str) -> Tuple[int, int]:

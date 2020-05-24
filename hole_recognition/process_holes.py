@@ -43,6 +43,11 @@ def find_holes(model, img, table):
     k = 0.8  # probability that the model prediction is correct
     for i in range(len(table)):
         border_images, _ = split_border(img, table[i], table[i-1], num=60)
+
+        if len(border_images) == 0:
+            not_hole_prob.append(0.5)
+            continue
+
         one_side_hole_probs = model.predict(border_images)
         not_hole_prob.append((1 - one_side_hole_probs * k).prod().item())
     prob0 = not_hole_prob[0] * not_hole_prob[2]

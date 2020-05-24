@@ -43,6 +43,9 @@ class TableTracker:
         if self.new_state is None or self.prev_state is None:
             return False
 
+        if len(self.new_state) == 0 or len(self.prev_state) == 0:
+            return True
+
         prev = np.array(self.prev_state)
         new = np.array(self.new_state)
         return (np.abs(prev - new)).mean() > 3

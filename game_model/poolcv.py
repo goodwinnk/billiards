@@ -83,6 +83,7 @@ class PoolCV:
         self.max_ball_radius_pixels = int(max_side / self.table_size_mm[0] * self.ball_size_mm)
 
     def _update_board(self, frame, index):
+        self.log.append(VideoEvent(VideoEvent.EventType.CAMERA_CHANGED, index))
         un_oriented_table_layout = find_table_layout_on_frame(frame)
         if un_oriented_table_layout is None:
             self.board = None
@@ -119,7 +120,6 @@ class PoolCV:
             self.table_tracker.update(frame)
 
         if self.board is None or self._need_to_update_board(frame, index):
-            print('Updating....')
             self._update_board(frame, index)
 
         if self.board is None:

@@ -1,3 +1,5 @@
+from itertools import takewhile
+
 from cv2 import imshow, destroyWindow, namedWindow, WINDOW_AUTOSIZE
 
 from data_utils.utils import frame_by_frame_play
@@ -13,6 +15,9 @@ if __name__ == '__main__':
     def frame_modifier(frame, index):
         poolCV.update(frame, index)
         poolCV.draw_game_on_image(frame, draw_net=False)
+
+        for event in reversed(list(takewhile(lambda e: e.frame_index == index, reversed(poolCV.log)))):
+            print(event)
 
         model_image = poolCV.get_model_image()
         imshow(model_window_name, model_image)

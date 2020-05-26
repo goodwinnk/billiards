@@ -4,14 +4,15 @@ import numpy as np
 import cv2
 import torch
 
-from ball_detection.commons import CandidateGenerator, BallCandidate, Point, Rectangle
+from ball_detection.commons import CandidateGenerator, BallCandidate, Point, Rectangle, fit_region_in_image
 from ball_detection.candidate_generation_fcn.model import BallLocationFCN
 
 
 PREDICTION_THRESHOLD = .5
 MIN_BALL_CONTOUR_LEN = 8
 MAX_BALL_CONTOUR_LEN = 40
-MIN_HALF_SIDE = 12
+MIN_RAD = 8
+RADIUS_SCALE_COEFFICIENT = 1.5
 IMAGE_SIZE_RATIO = 2
 MASK_SIZE_RATIO = 4
 BOX_SCALE_FACTOR = 1.7
@@ -31,16 +32,17 @@ class FCNCandidateGenerator(CandidateGenerator):
         net_prediction = self.net(net_image).cpu().detach().numpy().squeeze()
         ball_mask = np.uint8(net_prediction > PREDICTION_THRESHOLD) * self.table_mask
         contours, _ = cv2.findContours(ball_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        m, n = image.shape[:2]
+        image_resolution = image.shape[:2]
         regions = []
         for contour in contours:
             if MIN_BALL_CONTOUR_LEN <= len(contour) <= MAX_BALL_CONTOUR_LEN:
                 contour *= MASK_SIZE_RATIO
-                c = Point(*map(int, contour.mean(axis=0)[0]))
+                cx, cy = contour.mean(axis=0).flatten()
+                cx, cy = int(cx), int(cy)
+                center = Point(cx, cy)
                 xs, ys = contour.squeeze().T
-                max_coord_delta = max(np.abs(ys - c.y).max(), np.abs(xs - c.x).max())
-                half_side = max(int(max_coord_delta * 2), MIN_HALF_SIDE)
-                half_side = min(half_side, n - c.x, c.x, m - c.y, c.y)
-                box = Rectangle(c.x - half_side, c.y - half_side, c.x + half_side + 1, c.y + half_side + 1)
-                regions.append(BallCandidate(c, box))
+                max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
+                radius = max(max_coord_delta * RADIUS_SCALE_COEFFICIENT, MIN_RAD)
+                box = fit_region_in_image(radius, center, image_resolution)
+                regions.append(BallCandidate(center, box))
         return regions

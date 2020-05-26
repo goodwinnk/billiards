@@ -1,7 +1,7 @@
 from enum import Enum
 from collections import namedtuple
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 import numpy as np
 
@@ -17,6 +17,10 @@ class BallType(Enum):
 Point = namedtuple('Point', 'x y')
 Rectangle = namedtuple('Rectangle', 'x0 y0 x1 y1')
 BallRegion = namedtuple('BallRegion', 'center box region_type')
+
+
+def get_center(rectangle: Rectangle) -> Point:
+    return Point(int((rectangle.x0 + rectangle.x1) / 2), int((rectangle.y0 + rectangle.y1) / 2))
 
 
 class BallCandidate:
@@ -62,3 +66,11 @@ def iou(ball1: Rectangle, ball2: Rectangle) -> float:
     ai = area(intersection)
     au = a1 + a2 - ai
     return ai / au
+
+
+def fit_region_in_image(radius: Union[int, float], center: Point, image_resolution: Tuple[int]) -> Rectangle:
+    m, n = image_resolution
+    adjusted_radius = radius * CANDIDATE_PADDING_COEFFICIENT
+    half_side = min(adjusted_radius, n - center.x, center.x, m - center.y, center.y)
+    return Rectangle(int(center.x - half_side), int(center.y - half_side),
+                     int(center.x + half_side + 1), int(center.y + half_side + 1))

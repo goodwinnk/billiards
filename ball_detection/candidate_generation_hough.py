@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 from ball_detection.commons import CANDIDATE_PADDING_COEFFICIENT, BallCandidate, BallRegion, CandidateGenerator, \
-    Point, Rectangle
+    Point, Rectangle, fit_region_in_image
 
 
 class HoughCircleDetector(CandidateGenerator):
@@ -20,10 +20,9 @@ class HoughCircleDetector(CandidateGenerator):
 
     def get_regions(self, image: np.ndarray) -> List[BallRegion]:
         regions = []
-        m, n = image.shape[:2]
+        image_resolution = image.shape[:2]
         for x, y, r in self.get_hough_circles(image):
-            half_side = min(r * CANDIDATE_PADDING_COEFFICIENT, n - x, x, m - y, y)
             center = Point(x, y)
-            box = Rectangle(int(x - half_side), int(y - half_side), int(x + half_side + 1), int(y + half_side + 1))
+            box = fit_region_in_image(r, center, image_resolution)
             regions.append(BallCandidate(center, box, r))
         return regions

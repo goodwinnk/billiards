@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 
-from ball_detection.commons import Point, Rectangle, BallCandidate, CandidateGenerator, CANDIDATE_PADDING_COEFFICIENT
+from ball_detection.commons import Point, Rectangle, BallCandidate, CandidateGenerator, CANDIDATE_PADDING_COEFFICIENT, \
+    fit_region_in_image
 
 
 MIN_BALL_CONTOUR_LEN = 40
@@ -44,14 +45,15 @@ class MotionDetector(CandidateGenerator):
     def get_regions(self, image):
         motion_mask = self.get_motion_mask(image)
         contours, _ = cv2.findContours(motion_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        m, n = image.shape[:2]
+        image_resolution = image.shape[:2]
         regions = []
         for contour in contours:
             if MIN_BALL_CONTOUR_LEN <= len(contour) <= MAX_BALL_CONTOUR_LEN:
-                cx, cy = center = Point(*map(int, contour.mean(axis=0)[0]))
+                cx, cy = contour.mean(axis=0).flatten()
+                cx, cy = int(cx), int(cy)
                 xs, ys = contour.squeeze().T
                 max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
-                half_side = min(int(max_coord_delta * CANDIDATE_PADDING_COEFFICIENT), n - cx, cx, m - cy, cy)
-                box = Rectangle(cx - half_side, cy - half_side, cx + half_side + 1, cy + half_side + 1)
+                center = Point(cx, cy)
+                box = fit_region_in_image(max_coord_delta, center, image_resolution)
                 regions.append(BallCandidate(center, box))
         return regions

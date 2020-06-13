@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import torch
 
-from ball_detection.commons import CandidateGenerator, BallCandidate, Point, Rectangle, fit_region_in_image
+from ball_detection.commons import CandidateGenerator, BallCandidate, Point, fit_region_in_image
 from ball_detection.candidate_generation_fcn.model import BallLocationFCN
 
 
@@ -12,6 +12,7 @@ PREDICTION_THRESHOLD = .5
 MIN_BALL_CONTOUR_LEN = 8
 MAX_BALL_CONTOUR_LEN = 40
 MIN_RAD = 8
+DEFAULT_RAD = 24
 RADIUS_SCALE_COEFFICIENT = 1.5
 IMAGE_SIZE_RATIO = 2
 MASK_SIZE_RATIO = 4
@@ -19,11 +20,12 @@ BOX_SCALE_FACTOR = 1.7
 
 
 class FCNCandidateGenerator(CandidateGenerator):
-    def __init__(self, weights_path: str, table_mask: np.ndarray, device='cpu'):
+    def __init__(self, weights_path: str, table_mask: np.ndarray, device='cpu', fixed_rad=False):
         self.net = BallLocationFCN().to(device)
         self.net.load_state_dict(torch.load(weights_path))
         self.device = device
         self.table_mask = table_mask[::MASK_SIZE_RATIO, ::MASK_SIZE_RATIO]
+        self.fixed_rad = fixed_rad
 
     def get_regions(self, image: np.ndarray) -> List[BallCandidate]:
         net_image = torch.FloatTensor(image[::IMAGE_SIZE_RATIO, ::IMAGE_SIZE_RATIO]) / 255
@@ -35,14 +37,18 @@ class FCNCandidateGenerator(CandidateGenerator):
         image_resolution = image.shape[:2]
         regions = []
         for contour in contours:
-            if MIN_BALL_CONTOUR_LEN <= len(contour) <= MAX_BALL_CONTOUR_LEN:
+            if self.fixed_rad and len(contour) <= MAX_BALL_CONTOUR_LEN or \
+                    MIN_BALL_CONTOUR_LEN <= len(contour) <= MAX_BALL_CONTOUR_LEN:
                 contour *= MASK_SIZE_RATIO
                 cx, cy = contour.mean(axis=0).flatten()
                 cx, cy = int(cx), int(cy)
                 center = Point(cx, cy)
-                xs, ys = contour.squeeze().T
-                max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
-                radius = max(max_coord_delta * RADIUS_SCALE_COEFFICIENT, MIN_RAD)
+                if self.fixed_rad:
+                    radius = DEFAULT_RAD
+                else:
+                    xs, ys = contour.squeeze().T
+                    max_coord_delta = max(np.abs(ys - cy).max(), np.abs(xs - cx).max())
+                    radius = max(max_coord_delta * RADIUS_SCALE_COEFFICIENT, MIN_RAD)
                 box = fit_region_in_image(radius, center, image_resolution)
                 regions.append(BallCandidate(center, box))
         return regions

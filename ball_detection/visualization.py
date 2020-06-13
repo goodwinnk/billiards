@@ -14,7 +14,7 @@ VIS_COLORS = {
 }
 
 
-def visualize_balls(image: np.ndarray, balls: BallRegion) -> np.ndarray:
+def visualize_balls(image: np.ndarray, balls: List[BallRegion]) -> np.ndarray:
     visualization = image.copy()
     return visualize_balls_on_image(visualization, balls)
 

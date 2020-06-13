@@ -68,7 +68,7 @@ def iou(ball1: Rectangle, ball2: Rectangle) -> float:
     return ai / au
 
 
-def fit_region_in_image(radius: Union[int, float], center: Point, image_resolution: Tuple[int]) -> Rectangle:
+def fit_region_in_image(radius: Union[int, float], center: Point, image_resolution: Tuple[int, int]) -> Rectangle:
     m, n = image_resolution
     adjusted_radius = radius * CANDIDATE_PADDING_COEFFICIENT
     half_side = min(adjusted_radius, n - center.x, center.x, m - center.y, center.y)
